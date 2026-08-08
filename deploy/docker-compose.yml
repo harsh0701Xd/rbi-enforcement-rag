@@ -1,0 +1,113 @@
+# FinGraph Intelligence System — Docker Compose
+#
+# Services:    neo4j | postgres | mlflow | api
+# NOT here:    Ollama — runs as systemd service on host for GPU passthrough
+#
+# EC2 memory budget (4096MB total):
+#   neo4j:    2048MB heap (dev only — Aura Free in prod)
+#   postgres:  300MB
+#   mlflow:    350MB
+#   api:      1200MB
+#   OS/nginx:  ~700MB buffer
+#   TOTAL:    ~3200MB ✓
+#
+# Run from the rbi_intel/ root dir (NOT from deploy/):
+#   docker compose -f deploy/docker-compose.yml --env-file .env up neo4j postgres mlflow -d
+
+services:
+
+  # ── Neo4j (local dev only — use Aura Free in prod) ─────────────────────────
+  neo4j:
+    image: neo4j:5
+    container_name: neo4j
+    ports:
+      - "7474:7474"    # Browser UI
+      - "7687:7687"    # Bolt protocol
+    environment:
+      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD}"
+      NEO4J_server_memory_heap_max__size: "2G"
+      NEO4J_server_memory_pagecache_size: "512M"
+    volumes:
+      - neo4j_data:/data
+    mem_limit: 2560m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── PostgreSQL (LangGraph checkpointer) ─────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5433:5432"    # host 5433 → container 5432 (avoids conflict with local PG)
+    environment:
+      POSTGRES_DB: langgraph_state
+      POSTGRES_USER: "${PG_USER}"
+      POSTGRES_PASSWORD: "${PG_PASSWORD}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    mem_limit: 300m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d langgraph_state"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MLflow (experiment tracking) ────────────────────────────────────────────
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.14.1
+    container_name: mlflow
+    ports:
+      - "5000:5000"
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root /mlflow/artifacts
+    volumes:
+      - mlflow_data:/mlflow
+    mem_limit: 350m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── FastAPI (production / EC2) ───────────────────────────────────────────────
+  # Comment out neo4j service above when using Neo4j Aura Free in prod.
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: rbi_intel_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - chroma_data:/app/data/chroma
+      - ../logs:/app/logs
+    mem_limit: 1200m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    profiles:
+      - prod    # only started with: docker compose --profile prod up
+
+volumes:
+  neo4j_data:
+  postgres_data:
+  mlflow_data:
+  chroma_data:

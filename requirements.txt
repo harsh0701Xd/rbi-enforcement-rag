@@ -1,0 +1,52 @@
+# ── Core ──────────────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+pyyaml==6.0.2
+pydantic==2.7.1
+
+# ── LLM & Orchestration ───────────────────────────────────────────────────────
+anthropic==0.28.0
+langchain==0.2.6
+langchain-anthropic==0.1.19
+langchain-community==0.2.6
+langgraph==0.1.19
+langsmith==0.1.77
+
+# ── Embeddings & Reranking ────────────────────────────────────────────────────
+sentence-transformers==3.0.1    # ms-marco cross-encoder reranker (in-process)
+# nomic-embed-text served via Ollama — no pip package needed
+
+# ── Vector Store ──────────────────────────────────────────────────────────────
+chromadb==0.5.5                 # NOTE: two patches required — run: bash patches/apply_patches.sh
+
+# ── Graph Store ───────────────────────────────────────────────────────────────
+neo4j==5.21.0
+
+# ── API Layer ─────────────────────────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+httpx==0.27.0                   # async Ollama client
+
+# ── Session State ─────────────────────────────────────────────────────────────
+psycopg2-binary==2.9.9
+langgraph-checkpoint-postgres==1.0.2
+
+# ── Frontend ──────────────────────────────────────────────────────────────────
+streamlit==1.36.0
+
+# ── Evaluation ────────────────────────────────────────────────────────────────
+ragas==0.1.14
+mlflow==2.14.1
+datasets==2.20.0                # ragas dataset wrapper
+
+# ── Scraping & Ingestion ──────────────────────────────────────────────────────
+requests==2.32.3
+beautifulsoup4==4.12.3
+lxml==5.2.2
+
+# ── Resilience ────────────────────────────────────────────────────────────────
+tenacity==8.4.1
+
+# ── Dev / Testing ─────────────────────────────────────────────────────────────
+pytest==8.2.2
+pytest-asyncio==0.23.7
+mypy==1.10.1

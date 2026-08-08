@@ -1,0 +1,115 @@
+# FinGraph Intelligence System — Tunable Parameters
+# ALL magic numbers live here. Secrets stay in .env.
+# Every RAGAS run logs the relevant keys to MLflow so scores are reproducible.
+
+# ── Ingestion ──────────────────────────────────────────────────────────────────
+ingestion:
+  chunk_size: 2000           # covers entire RBI press release in one embedding (nomic-embed-text supports 8192 tokens)
+  chunk_overlap: 0           # irrelevant at this size; set to non-zero when ingesting longer docs
+  chars_per_token: 4.0       # conversion factor: chunk_size * chars_per_token = chunk window in chars
+  min_chunk_length: 100      # discard chunks shorter than this (in tokens; applied as min_chunk_length * chars_per_token chars)
+  embed_batch_size: 32       # chunks per Ollama embedding call
+  extraction_workers: 5      # ThreadPoolExecutor concurrency for Haiku extraction calls
+
+# ── Stage 1 — Naive RAG ───────────────────────────────────────────────────────
+naive_rag:
+  top_k: 5                   # chunks retrieved from ChromaDB
+
+# ── Stage 2 — Advanced RAG ────────────────────────────────────────────────────
+advanced_rag:
+  hyde_temperature: 0.3      # hypothetical answer generation temp
+  top_k_initial: 10          # wide retrieval before reranking
+  top_k_final: 3             # chunks kept after reranking
+
+# ── Stage 3 — Agentic GraphRAG ────────────────────────────────────────────────
+agentic_rag:
+  max_sub_questions: 4       # query decomposer upper bound
+  max_iterations: 5          # LangGraph loop guard
+  cypher_limit: 20           # LIMIT clause in all generated Cypher
+  graph_fallback_threshold: 0  # min result count before fallback to vector
+  # Stage 4 vector-node upgrades
+  top_k_vector: 10           # wide retrieval per sub-question before reranking
+  top_k_vector_final: 5      # chunks kept after cross-encoder rerank per sub-question
+
+# ── Models ────────────────────────────────────────────────────────────────────
+models:
+  system_model: "claude-haiku-4-5-20251001"   # reasoning + synthesis
+  judge_model: "claude-sonnet-4-6"            # RAGAS eval only — NEVER set to system_model
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L6-v2"
+
+# ── Embedding Provider ────────────────────────────────────────────────────────
+# Switch provider + model here — no code changes needed.
+# Supported providers: ollama | openai | cohere | huggingface | voyageai | mistral
+# Credentials for the active provider must be set in .env.
+embedding:
+  provider: "ollama"
+  model: "nomic-embed-text"
+  # Provider-specific parameters — only the active provider's block is used
+  ollama:
+    keepalive: -1          # keep model loaded in RAM indefinitely
+    request_timeout: 30
+  openai:
+    dimensions: 1536       # text-embedding-3-small=1536, text-embedding-3-large=3072
+    request_timeout: 30
+  cohere:
+    input_type: "search_document"   # search_document | search_query | classification
+    request_timeout: 30
+  huggingface:
+    device: "cuda"         # cuda | cpu
+    normalize: true
+  voyageai:
+    input_type: "document" # document | query
+    request_timeout: 30
+  mistral:
+    request_timeout: 30
+
+# ── LLM Call Parameters ───────────────────────────────────────────────────────
+llm:
+  extraction_temperature: 0      # entity extraction — never change
+  chat_temperature: 0            # all chat responses
+  hyde_temperature: 0.3          # hypothetical doc generation only
+  cypher_temperature: 0          # Cypher generation — never change
+  max_tokens_chat: 2048          # raised from 1024 — Stage 3 synthesis over multi-hop graph results
+  max_tokens_extraction: 1024    # raised from 512 — worst-case: 8+ violations + 6 regulation_refs per PR
+  max_tokens_cypher: 512         # raised from 256 — worst-case: multi-hop OPTIONAL MATCH with subqueries
+
+# ── Serving ───────────────────────────────────────────────────────────────────
+serving:
+  api_port: 8000
+  uvicorn_workers: 2             # max on EC2 t3.medium 4GB RAM
+  request_timeout_seconds: 120   # LangGraph Stage 3 can take 30-60s
+  embed_cache_size: 1000         # LRU cache max entries
+
+# ── Evaluation ────────────────────────────────────────────────────────────────
+evaluation:
+  ragas_batch_size: 5            # queries per RAGAS batch API call
+  smoke_test_count: 10           # queries in CI smoke test gate
+  # CI gate thresholds — deploy fails if below these
+  faithfulness_gate: 0.65
+  relevancy_gate: 0.60
+  # Target thresholds — logged to MLflow, not enforced in CI
+  faithfulness_target: 0.75
+  relevancy_target: 0.70
+  context_precision_target: 0.65
+  context_recall_target: 0.60
+  node_precision_target: 0.70
+  node_recall_target: 0.65
+  cypher_validity_target: 0.85
+  cypher_validity_rate_target: 0.85  # alias used by graph_metrics.py auto-lookup
+  routing_accuracy_target: 0.80
+
+# ── Neo4j ─────────────────────────────────────────────────────────────────────
+neo4j:
+  max_connection_lifetime: 200
+  connection_timeout: 30
+  max_retry_attempts: 3
+  retry_wait_min_seconds: 1
+  retry_wait_max_seconds: 4
+
+# ── Graph Density Gate ────────────────────────────────────────────────────────
+graph:
+  min_avg_out_degree: 4          # halt Stage 3 if below this
+
+# ── ChromaDB ──────────────────────────────────────────────────────────────────
+chroma:
+  collection_name: "rbi_enforcement"   # change per ablation experiment if needed

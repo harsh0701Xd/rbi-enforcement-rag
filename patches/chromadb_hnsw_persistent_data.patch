@@ -1,0 +1,28 @@
+--- a/chromadb/segment/impl/vector/local_persistent_hnsw.py
++++ b/chromadb/segment/impl/vector/local_persistent_hnsw.py
+@@ -79,8 +79,22 @@ class PersistentData:
+
+     @staticmethod
+-    def load_from_file(filename: str) -> "PersistentData":
++    def load_from_file(filename: str) -> "PersistentData":  # type: ignore[override]
++        """Load persistent data from a file.
++
++        Older ingestion versions serialised the state as a plain dict instead
++        of a PersistentData instance.  Detect and migrate transparently.
++        """
+         with open(filename, "rb") as f:
+             ret = pickle.load(f)
+-        return cast(PersistentData, ret)
++        if isinstance(ret, dict):
++            # Legacy format: wrap the dict into a PersistentData object
++            return PersistentData(
++                dimensionality=ret.get("dimensionality"),
++                total_elements_added=ret.get("total_elements_added", 0),
++                total_elements_updated=ret.get("total_elements_updated", 0),
++                total_invalid_operations=ret.get("total_invalid_operations", 0),
++                max_seq_id=ret.get("max_seq_id", 0),
++                id_to_label=ret.get("id_to_label", {}),
++                label_to_id=ret.get("label_to_id", {}),
++                id_to_seq_id=ret.get("id_to_seq_id", {}),
++            )
++        return cast(PersistentData, ret)

@@ -1,0 +1,33 @@
+# Secrets
+.env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.mypy_cache/
+.pytest_cache/
+
+# Data — never commit raw/scraped content or vector store
+data/raw/
+data/chroma/
+
+# Logs — keep directory skeleton, exclude all log content
+logs/*
+!logs/.gitkeep
+cypher_errors.log
+
+# Dev / planning notes (internal only)
+tasks/
+
+# MLflow
+mlruns/
+mlflow.db
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db

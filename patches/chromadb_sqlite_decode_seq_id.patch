@@ -1,0 +1,19 @@
+--- a/chromadb/segment/impl/metadata/sqlite.py
++++ b/chromadb/segment/impl/metadata/sqlite.py
+@@ -661,7 +661,16 @@ def _encode_seq_id(seq_id: SeqId) -> bytes:
+     raise ValueError(f"Unsupported SeqID: {seq_id}")
+
+-def _decode_seq_id(seq_id_bytes: bytes) -> SeqId:
+-    if len(seq_id_bytes) == 8:
++def _decode_seq_id(seq_id_bytes) -> SeqId:
++    """Decode a byte array OR plain integer into a SeqID.
++
++    SQLite returns an int (not bytes) when the seq_id column was stored with
++    INTEGER affinity (older ingestion versions).  Guard added to handle both.
++    """
++    if isinstance(seq_id_bytes, int):
++        return seq_id_bytes  # already a valid SeqId integer -- nothing to decode
++    if len(seq_id_bytes) == 8:
+         return int.from_bytes(seq_id_bytes, "big")
+     elif len(seq_id_bytes) == 24:
+         return int.from_bytes(seq_id_bytes, "big")

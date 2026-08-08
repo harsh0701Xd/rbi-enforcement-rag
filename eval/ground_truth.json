@@ -1,0 +1,213 @@
+{
+  "version": "2.0",
+  "locked": false,
+  "total": 50,
+  "description": "RBI enforcement corpus QA pairs. Tier 1 = single-entity factual; Tier 2 = relational/filter; Tier 3 = aggregation/multi-hop.",
+  "tiers": {
+    "1": "Single-entity factual — specific institution, action type, violation category",
+    "2": "Relational/filter — by entity type, year, violation, or regulation",
+    "3": "Aggregation/analytical — counts, patterns, cross-entity comparisons"
+  },
+  "qa_pairs": [
+    {
+      "id": "gt_001",
+      "tier": 1,
+      "entity_focus": "Axis Bank",
+      "entity_type": "Bank-Private",
+      "question": "Has RBI imposed any monetary penalty on Axis Bank?",
+      "ground_truth": "Yes, RBI has imposed monetary penalties on Axis Bank Limited for non-compliance with regulatory directions issued by the Reserve Bank of India."
+    },
+    {
+      "id": "gt_003",
+      "tier": 1,
+      "entity_focus": "Axis Bank",
+      "entity_type": "Bank-Private",
+      "question": "Under which statutory provision does RBI penalise banks like Axis Bank?",
+      "ground_truth": "RBI exercises its powers under Section 47A(1)(c) read with Sections 46(4)(i) and 51(1) of the Banking Regulation Act, 1949 to impose monetary penalties on banks."
+    },
+    {
+      "id": "gt_004",
+      "tier": 1,
+      "entity_focus": "HDFC Bank",
+      "entity_type": "Bank-Private",
+      "question": "Has HDFC Bank received any enforcement action from RBI?",
+      "ground_truth": "Yes, HDFC Bank Limited has received monetary penalties from RBI for non-compliance with regulatory directions including KYC and other banking directions."
+    },
+    {
+      "id": "gt_008",
+      "tier": 1,
+      "entity_focus": "Yes Bank",
+      "entity_type": "Bank-Private",
+      "question": "Has RBI taken any enforcement action against Yes Bank?",
+      "ground_truth": "Yes, RBI has imposed monetary penalties on Yes Bank Limited for non-compliance with regulatory directions issued under the Banking Regulation Act."
+    },
+    {
+      "id": "gt_009",
+      "tier": 1,
+      "entity_focus": "State Bank of India",
+      "entity_type": "Bank-Public",
+      "question": "Has RBI penalised State Bank of India for regulatory violations?",
+      "ground_truth": "Yes, RBI has imposed monetary penalties on the State Bank of India for non-compliance with various regulatory directions."
+    },
+    {
+      "id": "gt_011",
+      "tier": 1,
+      "entity_focus": "cooperative bank",
+      "entity_type": "Bank-Cooperative",
+      "question": "What types of violations lead to penalties on cooperative banks by RBI?",
+      "ground_truth": "RBI penalises cooperative banks for violations including non-compliance with KYC directions, income recognition norms, asset classification, and provisioning requirements."
+    },
+    {
+      "id": "gt_013",
+      "tier": 1,
+      "entity_focus": "NBFC",
+      "entity_type": "NBFC-ICC",
+      "question": "What violations commonly attract penalties on NBFCs from RBI?",
+      "ground_truth": "NBFCs are commonly penalised by RBI for violations of Fair Practices Code directions, KYC norms, non-compliance with NBFC directions, and systemic data submission requirements."
+    },
+    {
+      "id": "gt_015",
+      "tier": 1,
+      "entity_focus": "KYC",
+      "entity_type": "all",
+      "question": "What are KYC directions in the context of RBI enforcement?",
+      "ground_truth": "KYC directions refer to the Reserve Bank of India's Know Your Customer guidelines that require financial institutions to verify customer identities and maintain due diligence records. Non-compliance with these directions is one of the most common grounds for RBI monetary penalties."
+    },
+    {
+      "id": "gt_019",
+      "tier": 1,
+      "entity_focus": "Fair Practices Code",
+      "entity_type": "NBFC",
+      "question": "What is the Fair Practices Code that NBFCs are penalised for violating?",
+      "ground_truth": "The Fair Practices Code is a set of guidelines issued by RBI requiring NBFCs to follow fair, transparent, and responsible practices in their dealings with customers. Violations of these directions attract monetary penalties from RBI."
+    },
+    {
+      "id": "gt_025",
+      "tier": 1,
+      "entity_focus": "NBFC-MFI",
+      "entity_type": "NBFC-MFI",
+      "question": "Have microfinance NBFCs been penalised by RBI?",
+      "ground_truth": "Yes, NBFC-MFIs (microfinance institutions) have been penalised by RBI for non-compliance with regulatory directions including NBFC directions and KYC norms."
+    },
+    {
+      "id": "gt_026",
+      "tier": 2,
+      "entity_focus": "KYC 2023",
+      "entity_type": "all",
+      "question": "Which banks were penalised by RBI for KYC non-compliance in 2023?",
+      "ground_truth": "Several banks including cooperative banks, urban cooperative banks, and private sector banks were penalised by RBI for KYC non-compliance in 2023."
+    },
+    {
+      "id": "gt_028",
+      "tier": 2,
+      "entity_focus": "cooperative bank 2023",
+      "entity_type": "Bank-Cooperative",
+      "question": "Which cooperative banks received RBI penalties in 2023?",
+      "ground_truth": "Several cooperative banks received monetary penalties from RBI in 2023 for non-compliance with KYC directions and other regulatory requirements."
+    },
+    {
+      "id": "gt_029",
+      "tier": 2,
+      "entity_focus": "NBFC 2023",
+      "entity_type": "NBFC",
+      "question": "Which NBFCs were penalised by RBI in 2023?",
+      "ground_truth": "Several NBFCs including NBFC-ICCs and NBFC-HFCs received monetary penalties from RBI in 2023 for non-compliance with NBFC directions and KYC norms."
+    },
+    {
+      "id": "gt_031",
+      "tier": 2,
+      "entity_focus": "private banks 2022",
+      "entity_type": "Bank-Private",
+      "question": "Which private sector banks received RBI enforcement actions in 2022?",
+      "ground_truth": "Several private sector banks including large private banks received monetary penalties from RBI in 2022 for non-compliance with various regulatory directions."
+    },
+    {
+      "id": "gt_032",
+      "tier": 2,
+      "entity_focus": "Banking Regulation Act",
+      "entity_type": "all",
+      "question": "Under which sections of the Banking Regulation Act does RBI impose penalties?",
+      "ground_truth": "RBI imposes penalties primarily under Section 47A(1)(c) read with Sections 46(4)(i) and 51(1) of the Banking Regulation Act, 1949 for non-compliance with regulatory directions."
+    },
+    {
+      "id": "gt_033",
+      "tier": 2,
+      "entity_focus": "large penalty",
+      "entity_type": "all",
+      "question": "What are some of the larger monetary penalties imposed by RBI on banks?",
+      "ground_truth": "RBI has imposed penalties ranging from a few lakh to several crore rupees. Larger penalties are typically imposed on private sector banks and public sector banks for significant regulatory violations."
+    },
+    {
+      "id": "gt_035",
+      "tier": 2,
+      "entity_focus": "public bank violations",
+      "entity_type": "Bank-Public",
+      "question": "What regulatory violations have led to RBI penalties on public sector banks?",
+      "ground_truth": "Public sector banks have been penalised by RBI for non-compliance with KYC directions, income recognition and asset classification norms, and other regulatory directions."
+    },
+    {
+      "id": "gt_037",
+      "tier": 2,
+      "entity_focus": "2021 enforcement",
+      "entity_type": "all",
+      "question": "What types of enforcement actions did RBI take in 2021?",
+      "ground_truth": "In 2021, RBI took enforcement actions including monetary penalties against various banks and NBFCs for non-compliance with KYC, fair practices, and other regulatory directions."
+    },
+    {
+      "id": "gt_041",
+      "tier": 3,
+      "entity_focus": "most penalised entity type",
+      "entity_type": "all",
+      "question": "Which type of financial institution has received the most RBI enforcement actions in the corpus?",
+      "ground_truth": "Cooperative banks (including urban cooperative banks and district central cooperative banks) represent the most frequently penalised entity type in RBI enforcement actions."
+    },
+    {
+      "id": "gt_042",
+      "tier": 3,
+      "entity_focus": "most common violation",
+      "entity_type": "all",
+      "question": "What is the most common regulatory violation cited by RBI in its enforcement press releases?",
+      "ground_truth": "Non-compliance with KYC (Know Your Customer) directions is among the most frequently cited regulatory violations in RBI enforcement press releases across banks and NBFCs."
+    },
+    {
+      "id": "gt_043",
+      "tier": 3,
+      "entity_focus": "penalty trend",
+      "entity_type": "all",
+      "question": "How many enforcement actions did RBI take in 2023 compared to 2022?",
+      "ground_truth": "RBI regularly issues enforcement press releases on a monthly basis. The corpus contains enforcement actions from multiple years including 2021, 2022, 2023, and 2024."
+    },
+    {
+      "id": "gt_045",
+      "tier": 3,
+      "entity_focus": "Axis Bank total",
+      "entity_type": "Bank-Private",
+      "question": "How many RBI enforcement actions have been taken against Axis Bank across all years?",
+      "ground_truth": "Axis Bank Limited has received multiple monetary penalties from RBI across different years for various regulatory violations."
+    },
+    {
+      "id": "gt_046",
+      "tier": 3,
+      "entity_focus": "largest penalised banks",
+      "entity_type": "Bank-Private",
+      "question": "Which private sector banks have received the most RBI penalties?",
+      "ground_truth": "Major private sector banks including HDFC Bank, ICICI Bank, Axis Bank, Kotak Mahindra Bank, and Yes Bank have all received monetary penalties from RBI for regulatory violations."
+    },
+    {
+      "id": "gt_047",
+      "tier": 3,
+      "entity_focus": "KYC penalty aggregate",
+      "entity_type": "all",
+      "question": "Which financial institutions were penalised by RBI for KYC violations across 2022 and 2023?",
+      "ground_truth": "Across 2022 and 2023, RBI penalised a large number of financial institutions including cooperative banks, urban cooperative banks, private banks, public banks, and NBFCs for KYC non-compliance."
+    },
+    {
+      "id": "gt_048",
+      "tier": 3,
+      "entity_focus": "UCB aggregate",
+      "entity_type": "Bank-UCB",
+      "question": "How many urban cooperative banks have been penalised by RBI for regulatory violations?",
+      "ground_truth": "A significant number of urban cooperative banks have been penalised by RBI for regulatory violations, particularly KYC non-compliance and exposure norm violations. UCBs represent one of the most frequently penalised categories."
+    }
+  ]
+}
