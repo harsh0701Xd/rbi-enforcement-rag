@@ -11,16 +11,20 @@ A production-grade Retrieval-Augmented Generation system that answers natural la
 User Query
     │
     ▼
-┌─────────────────────────────────────────────────────────┐
-│  LangGraph Agentic Pipeline (Stage 4)                   │
-│                                                         │
-│  Decomposer → Router → ┌─ Vector Node ─┐               │
-│                         │  ChromaDB     │ → Synthesiser │
-│                         │  + Reranker   │               │
-│                         ├─ Graph Node ──┤               │
-│                         │  Neo4j Cypher │               │
-│                         └───────────────┘               │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  LangGraph Agentic Pipeline (Stage 5)                            │
+│                                                                  │
+│  Decomposer ──► Router ──► [execution_mode == parallel?]         │
+│                                    │                             │
+│                    ┌───── Yes ──────┴────── No ─────┐            │
+│                    ▼                                ▼            │
+│            ┌─ Vector Node ─┐               Hop Executor          │
+│            │  ChromaDB     │               (serial hops)         │
+│            │  + Reranker   │  → Synthesiser     │                │
+│            ├─ Graph Node ──┤       ▲             │               │
+│            │  Neo4j Cypher │       └─────────────┘               │
+│            └───────────────┘                                     │
+└──────────────────────────────────────────────────────────────────┘
     │
     ▼
 Grounded Answer (with PR citations)
@@ -29,7 +33,7 @@ Grounded Answer (with PR citations)
 **Key components:**
 
 - **Ingestion pipeline** — scrapes RBI press releases, extracts structured entities (bank name, penalty amount, violation type, statutory citations) with Claude Haiku, writes to both ChromaDB (1,300 chunks, nomic-embed-text 768-dim) and Neo4j (entity/penalty/violation graph)
-- **Stage 4 Agentic RAG** — LangGraph graph with query decomposition, hybrid routing, entity pre-filtering, cross-encoder reranking (ms-marco), and graph Cypher generation
+- **Stage 5 Agentic RAG** — LangGraph conditional DAG with dependency-aware multi-hop execution, query decomposition, hybrid routing, entity pre-filtering, cross-encoder reranking, and graph Cypher generation
 - **RAGAS evaluation** — 6-metric evaluation (faithfulness, answer relevancy, context precision/recall, answer correctness, context entity recall) across all 5 stages using Claude Sonnet as judge
 
 ---
@@ -43,13 +47,53 @@ Grounded Answer (with PR citations)
 | 2 | Advanced v2 | 0.558 | 0.738 | 0.787 | 0.513 | 0.437 | 0.482 |
 | 3 | Agentic v1 | 0.574 | 0.646 | **0.907** | 0.509 | 0.640 | 0.449 |
 | 4 | **Agentic v2** | **0.589** | 0.697 | 0.880 | **0.575** | **0.643** | 0.414 |
+| 5 | **Agentic v3** | — | — | — | — | — | — |
 
 > Composite = mean of all 6 RAGAS metrics. Judge model: `claude-sonnet-4-6`. Eval set: 25 QA pairs across 3 tiers (factual, relational, analytical).
+> Stage 5 RAGAS scores are not directly comparable to Stages 1–4 on the same 25-question set — Stage 5 addresses a categorical capability gap (dependent multi-hop reasoning) rather than an incremental metric improvement on existing query types.
 
 **Stage 4 key upgrades over Stage 3:**
 - Entity name pre-filter (`$in` operator) narrows ChromaDB to the named institution before cosine search
 - Wide retrieval (top-k=10) → cross-encoder reranking (top-k_final=5) per sub-question
 - Graph rows included in synthesiser context alongside vector chunks
+
+**Stage 5 key upgrades over Stage 4:**
+- Decomposer emits JSON with `execution_mode`, `cypher_sufficient`, and per-hop `depends_on` fields
+- `cypher_sufficient=True` path — fully graph-answerable multi-hop queries generate a single `WITH`-chained Cypher (one DB round-trip, no serial latency overhead)
+- `cypher_sufficient=False` hybrid path — graph identifies the entity on hop 0, template resolver substitutes `{q0_answer}` into hop 1's sub-question before `extract_entities()` runs, so the ChromaDB entity pre-filter activates correctly on dependent hops
+- `max_hops=3` guard prevents latency compounding on deep chains
+
+---
+
+## Stage 5: Multi-Hop Dependent Reasoning
+
+Stage 4 ran all sub-questions in parallel. This worked for independent queries but failed for dependent ones — if sub-question 2 was "What violations did {that bank} commit?", the entity pre-filter on sub-question 2 couldn't use sub-question 1's answer because retrieval was already in flight.
+
+Stage 5 fixes this with a conditional LangGraph DAG:
+
+**Example — hybrid path (`cypher_sufficient=False`):**
+```
+Q: "Which cooperative bank was penalised the most times, and what did the press release say?"
+
+Hop 0 (graph):  COUNT(PenaltyAction) GROUP BY Institution → "Bharat Co-operative Bank"
+                hop_results[0] = "Bharat Co-operative Bank (Mumbai) Limited"
+
+Hop 1 (vector): resolve "{q0_answer}" → "Bharat Co-operative Bank (Mumbai) Limited"
+                extract_entities(resolved_q) → entity filter activates
+                ChromaDB retrieves only Bharat Co-operative Bank press releases ✓
+```
+
+**Example — graph-only path (`cypher_sufficient=True`):**
+```
+Q: "Which bank had the highest penalty in 2023 and what were the violations?"
+
+Single WITH-chained Cypher:
+  MATCH (i:Institution)-[:RECEIVED]->(p:PenaltyAction)
+  WHERE p.date >= "2023-01-01" AND p.date < "2024-01-01"
+  WITH i, p ORDER BY p.penalty_lakh DESC LIMIT 1
+  OPTIONAL MATCH (p)-[:FOR_VIOLATION]->(v:Violation)
+  RETURN i.name, p.penalty_lakh, p.date, v.text   → 20 rows, 1 DB round-trip ✓
+```
 
 ---
 
@@ -74,26 +118,32 @@ Grounded Answer (with PR citations)
 ```
 rbi_intel/
 ├── ingestion/          # Scraper, extractor, graph writer, vector writer
-├── retrieval/          # vector_retriever.py, graph_retriever.py (NL→Cypher)
+├── retrieval/          # vector_retriever.py, graph_retriever.py (NL→Cypher + multi-hop)
 ├── rag/
-│   ├── nodes/          # Decomposer, router, vector_node, graph_node, synthesiser
+│   ├── nodes/          # decomposer, router, vector_node, graph_node,
+│   │                   # hop_executor (Stage 5), synthesiser
+│   ├── _entities.py    # Named entity registry + ChromaDB filter helpers
+│   ├── _resolver.py    # Template variable resolution ({q0_answer} substitution)
+│   ├── _reranker.py    # Cross-encoder reranking (ms-marco)
+│   ├── _state.py       # FinGraphState TypedDict (shared across all nodes)
 │   ├── naive_rag.py    # Stage 1
 │   ├── advanced_rag.py # Stage 2 (HyDE + reranking)
-│   └── agentic_rag.py  # Stage 3/4 (LangGraph)
-├── prompts/            # Cypher, decomposer, synthesis, HyDE, extraction prompts
+│   └── agentic_rag.py  # Stage 3–5 (LangGraph conditional DAG)
+├── prompts/            # Cypher, multi-hop Cypher, decomposer, synthesis prompts
 ├── eval/
-│   ├── ground_truth.json      # 25 locked QA pairs (3 tiers)
-│   ├── ragas_eval.py          # Evaluation runner
-│   └── results/               # RAGAS JSON outputs for all stages
+│   ├── ground_truth.json           # 25 locked QA pairs (3 tiers, Stages 1–4)
+│   ├── ground_truth_multihop.json  # 5 multi-hop QA pairs (Stage 5 validation)
+│   ├── ragas_eval.py               # Evaluation runner
+│   └── results/                    # RAGAS JSON outputs for all stages
 ├── tests/
 │   ├── unit/           # 6 unit test modules
-│   └── integration/    # Stage 4 live integration tests (15 smoke tests)
+│   └── integration/    # Stage 5 live integration tests
 ├── patches/            # ChromaDB 0.5.5 bug fixes (see below)
 ├── deploy/
 │   ├── docker-compose.yml
 │   └── .github/workflows/
-├── query_cli.py        # Interactive pre-deployment validation CLI
-├── config.yaml         # All hyperparameters (top-k, temperatures, models)
+├── query_cli.py        # Interactive validation CLI (--debug flag for pipeline logs)
+├── config.yaml         # All hyperparameters (top-k, temperatures, max_hops, models)
 └── requirements.txt
 ```
 
@@ -155,10 +205,11 @@ venv/bin/python3 -m ingestion.vector_writer
 ### 6. Run the interactive query CLI
 
 ```bash
-venv/bin/python3 query_cli.py
+venv/bin/python3 query_cli.py            # clean output
+venv/bin/python3 query_cli.py --debug    # show pipeline logs (routing, entity filter, hop resolution)
 ```
 
-The CLI shows full pipeline internals per query: decomposition, routing, entity pre-filter, vector chunks, graph rows, and final answer.
+The CLI shows full pipeline internals per query: execution mode (parallel/serial), decomposition, routing, entity pre-filter, vector chunks, graph rows, hop resolution, and final answer.
 
 ---
 
@@ -204,19 +255,6 @@ Older ingestion serialised HNSW index metadata as a plain `dict`. ChromaDB 0.5.5
 Fix: detect `dict` on load and wrap into a `PersistentData` instance.
 
 Both patches are in [`patches/`](patches/) with a one-line apply script.
-
----
-
-## Known Limitations & Roadmap
-
-**Stage 5 (planned):** Dependency-aware multi-hop execution.
-
-The current Stage 4 pipeline decomposes queries and runs all retrievals in parallel. For queries where sub-question 2 depends on sub-question 1's answer (e.g. "For the bank with the highest penalty in 2023, what were the specific violations?"), the entity pre-filter on sub-question 2 cannot use sub-question 1's result because retrieval is parallel.
-
-Stage 5 will add:
-- **`cypher_sufficient` routing flag** — fully graph-answerable multi-hop queries generate a single `WITH`-chained Cypher query (one DB round-trip, no serial latency)
-- **Dependency-aware serial execution** — hybrid queries (graph for hop 1, vector for hop 2) run sequentially with template variable substitution (`{q1_answer}`) between hops, ensuring the entity filter activates correctly on dependent sub-questions
-- **`max_hops = 3` guard** — prevents latency compounding and error propagation on deep chains
 
 ---
 
