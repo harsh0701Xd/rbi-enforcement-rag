@@ -39,3 +39,8 @@ class FinGraphState(TypedDict):
     context:       str               # merged formatted context for synthesiser
     answer:        str
     iterations:    int
+    # Stage 5 additions — set by decomposer, read by agentic_rag + hop_executor
+    execution_mode:    str            # "parallel" (Stage 4 path) | "serial" (Stage 5 hop executor)
+    cypher_sufficient: bool           # True → single WITH-chained Cypher covers all hops
+    hop_dependencies:  list           # per-hop dependency: None | int (id of hop this depends on)
+    hop_results:       dict           # hop_id (int) -> resolved answer string for template substitution

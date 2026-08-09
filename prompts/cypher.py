@@ -1,12 +1,14 @@
 """
 prompts/cypher.py
 
-NL → Cypher generation prompts for Stage 3 graph retrieval.
+NL → Cypher generation prompts for Stage 3/5 graph retrieval.
 Must stay in sync with ingestion/graph_writer.py and _rbi_graph_queries.py.
 
 Exports:
-  SCHEMA  -- RBI enforcement graph schema injected verbatim into every prompt
-  PROMPT  -- Cypher generation prompt; format with {schema}, {limit}, {question}
+  SCHEMA          -- RBI enforcement graph schema injected verbatim into every prompt
+  PROMPT          -- Single-hop Cypher generation; format with {schema}, {limit}, {question}
+  MULTIHOP_PROMPT -- Multi-hop Cypher generation; format with {schema}, {limit}, {sub_questions}
+                     Used by retrieve_multihop() when cypher_sufficient=True
 """
 
 # ── Graph schema ──────────────────────────────────────────────────────────────
@@ -70,4 +72,45 @@ STRICT RULES — violating any rule produces unusable output:
              RETURN SUM(p.penalty_lakh) AS total_penalty_lakh
 
 Question: {question}
+Cypher:"""
+
+
+# ── Multi-hop Cypher generation prompt ───────────────────────────────────────
+# Used only when cypher_sufficient=True (all sub-questions answerable from graph).
+# Generates a single WITH-chained Cypher covering all hops in one DB round-trip.
+
+MULTIHOP_PROMPT = """\
+You are a Neo4j Cypher expert. Generate ONE multi-hop Cypher query that answers
+ALL of the sub-questions below in a single query using WITH to chain results.
+
+GRAPH SCHEMA:
+{schema}
+
+SUB-QUESTIONS TO ANSWER (in order):
+{sub_questions}
+
+STRICT RULES:
+1. Use WITH to chain results between hops — do not write multiple MATCH clauses
+   that restart the traversal independently.
+2. Always include LIMIT {limit} on the FINAL result set only.
+   Do NOT add LIMIT inside intermediate WITH clauses.
+3. RETURN only properties, never full nodes  →  RETURN i.name, p.date  not  RETURN i
+4. Use OPTIONAL MATCH for relationships that may not exist (Violation, Regulation).
+5. Every MATCH clause must include a label  →  MATCH (i:Institution)
+6. Use case-insensitive matching when filtering by name  →  toLower(i.name) CONTAINS toLower("...")
+7. For date ranges use string comparison  →  p.date >= "2023-01-01" AND p.date < "2024-01-01"
+8. For aggregation across hops use ORDER BY + LIMIT (not COUNT, unless explicitly asked).
+9. If traversing to Violation nodes (v), include v.text in RETURN.
+10. If traversing to Regulation nodes (r), include r.citation in RETURN.
+11. Output ONLY the raw Cypher — no explanation, no markdown, no code fences.
+
+EXAMPLE (bank with highest 2023 penalty + its violations):
+  MATCH (i:Institution)-[:RECEIVED]->(p:PenaltyAction)
+  WHERE p.date >= "2023-01-01" AND p.date < "2024-01-01"
+    AND p.penalty_lakh IS NOT NULL
+  WITH i, p ORDER BY p.penalty_lakh DESC LIMIT 1
+  OPTIONAL MATCH (p)-[:FOR_VIOLATION]->(v:Violation)
+  OPTIONAL MATCH (p)-[:CITES]->(r:Regulation)
+  RETURN i.name, p.penalty_lakh, p.date, v.text, r.citation
+
 Cypher:"""

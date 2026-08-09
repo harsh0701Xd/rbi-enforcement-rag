@@ -1,0 +1,42 @@
+[
+  {
+    "id": "mh_001",
+    "question": "Which bank received the highest penalty in 2023, and what were the specific violations it was penalised for?",
+    "ground_truth": "ICICI Bank Limited received the highest penalty in 2023, amounting to ₹12.19 crore (1219 lakh). It was penalised for violations including non-compliance with RBI directions on Know Your Customer (KYC) norms, failure to report frauds within the prescribed timelines, and non-adherence to directions on interest rate on deposits.",
+    "hop_type": "hybrid",
+    "cypher_sufficient": false,
+    "notes": "Hop 0: graph (highest penalty 2023) → ICICI Bank. Hop 1: vector (entity filter=ICICI Bank) → specific violations from press release text."
+  },
+  {
+    "id": "mh_002",
+    "question": "Which bank had the most RBI penalty actions in 2022, and what was the total penalty amount imposed on it?",
+    "ground_truth": "The bank with the most RBI penalty actions in 2022 was Axis Bank Limited. The total penalty amount imposed on Axis Bank across its 2022 enforcement actions was approximately ₹10.7 crore (1070 lakh).",
+    "hop_type": "graph_only",
+    "cypher_sufficient": true,
+    "notes": "Hop 0: graph (COUNT penalty actions 2022 by institution) → Axis Bank. Hop 1: graph (SUM penalty_lakh for Axis Bank 2022). Single WITH-chained Cypher sufficient."
+  },
+  {
+    "id": "mh_003",
+    "question": "Which NBFC received the largest single penalty from RBI, and what regulation did RBI cite when imposing that penalty?",
+    "ground_truth": "Muthoot Finance Limited received the largest single penalty imposed on an NBFC by RBI. The penalty was imposed citing Section 58-B of the RBI Act, 1934, read with the Non-Banking Financial Companies Acceptance of Public Deposits (Reserve Bank) Directions, 2016, for non-compliance with directions on Know Your Customer (KYC) and Anti-Money Laundering (AML) norms.",
+    "hop_type": "graph_only",
+    "cypher_sufficient": true,
+    "notes": "Hop 0: graph (max penalty_lakh where entity_type IN NBFC types) → Muthoot Finance. Hop 1: graph (Regulation nodes for that PenaltyAction). Single WITH-chained Cypher."
+  },
+  {
+    "id": "mh_004",
+    "question": "Which cooperative bank was penalised the most times by RBI between 2021 and 2025, and what types of violations did it commit?",
+    "ground_truth": "The New India Co-operative Bank Limited was among the cooperative banks penalised most frequently by RBI between 2021 and 2025. Its violations included non-compliance with KYC norms, failure to classify NPAs as per RBI guidelines, non-adherence to income recognition and asset classification (IRAC) norms, and deficiencies in credit appraisal systems.",
+    "hop_type": "hybrid",
+    "cypher_sufficient": false,
+    "notes": "Hop 0: graph (COUNT penalty actions 2021-2025 where entity_type IN cooperative types, ORDER BY COUNT DESC LIMIT 1) → New India Co-operative Bank. Hop 1: vector (entity filter=New India Co-operative Bank) → violation descriptions from press release text."
+  },
+  {
+    "id": "mh_005",
+    "question": "Which private sector bank paid the highest total penalty across all years in the corpus, and what was the primary reason cited by RBI for penalising it?",
+    "ground_truth": "ICICI Bank Limited paid the highest total penalty among private sector banks across all years in the RBI enforcement corpus. The primary reason cited by RBI was persistent non-compliance with Know Your Customer (KYC) directions and Anti-Money Laundering (AML) guidelines, along with failure to adhere to RBI directions on loan account classification and reporting of frauds within prescribed timelines.",
+    "hop_type": "hybrid",
+    "cypher_sufficient": false,
+    "notes": "Hop 0: graph (SUM penalty_lakh GROUP BY institution WHERE entity_type='Bank-Private' ORDER BY total DESC LIMIT 1) → ICICI Bank. Hop 1: vector (entity filter=ICICI Bank) → primary reasons from press release text."
+  }
+]

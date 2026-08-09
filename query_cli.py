@@ -1,13 +1,14 @@
 """
 query_cli.py
 
-Interactive query CLI for manual pre-deployment validation of Stage 4 Agentic RAG.
+Interactive query CLI for manual pre-deployment validation of Stage 5 Agentic RAG.
 
 Usage:
-    venv/bin/python3 query_cli.py
+    venv/bin/python3 query_cli.py           # default: pipeline logs suppressed
+    venv/bin/python3 query_cli.py --debug   # show INFO logs from rag/retrieval
 
 Commands at the prompt:
-    <question>   -- run question through Stage 4 pipeline
+    <question>   -- run question through Stage 5 pipeline
     quit / exit  -- exit the CLI
     ---          -- print a separator between sessions
 """
@@ -26,13 +27,16 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-# Suppress noisy library logs; keep our own INFO
+# --debug flag: show INFO logs from rag/retrieval for Stage 5 validation
+_DEBUG_MODE = "--debug" in sys.argv
+
 logging.basicConfig(
     level=logging.WARNING,
-    format="%(levelname)-8s  %(message)s",
+    format="%(asctime)s  %(name)-30s  %(levelname)-8s  %(message)s",
 )
-logging.getLogger("rag").setLevel(logging.WARNING)
-logging.getLogger("retrieval").setLevel(logging.WARNING)
+_pipeline_log_level = logging.INFO if _DEBUG_MODE else logging.WARNING
+logging.getLogger("rag").setLevel(_pipeline_log_level)
+logging.getLogger("retrieval").setLevel(_pipeline_log_level)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("chromadb").setLevel(logging.WARNING)
 
@@ -61,26 +65,48 @@ def _display(result: dict, question: str) -> None:
     print(f"  QUERY: {question}")
     _hr("═")
 
+    # ── Stage 5 execution mode ────────────────────────────────────────────────
+    exec_mode  = result.get("execution_mode", "parallel")
+    cypher_ok  = result.get("cypher_sufficient", False)
+    hop_res    = result.get("hop_results", {})
+    mode_badge = "⚡ serial (Stage 5)" if exec_mode == "serial" else "⟳  parallel (Stage 4)"
+    print(f"\n  ▸ Execution Mode: {mode_badge}")
+    if exec_mode == "serial":
+        print(f"    cypher_sufficient={cypher_ok}")
+        if hop_res:
+            for hop_id, entity in hop_res.items():
+                print(f"    hop {hop_id} → resolved: \"{entity}\"")
+
     # ── sub-questions and routes ──────────────────────────────────────────────
     _section("Decomposition & Routing")
     subs   = result.get("sub_questions", [question])
     routes = result.get("routes", [])
-    for i, (sq, rt) in enumerate(zip(subs, routes), 1):
+    deps   = result.get("hop_dependencies", [None] * len(subs))
+    for i, (sq, rt, dep) in enumerate(zip(subs, routes, deps), 1):
         route_badge = {"vector": "🔵 vector", "graph": "🟢 graph",
                        "both": "🟣 both"}.get(rt, rt)
-        print(f"    [{i}] {route_badge}")
+        dep_str = f"  [depends on hop {dep}]" if dep is not None else ""
+        print(f"    [{i}] {route_badge}{dep_str}")
         print(_wrap(sq, indent=8))
 
     # ── filter applied ────────────────────────────────────────────────────────
     _section("Entity Pre-filter (per sub-question)")
     any_filter = False
-    for sq, rt in zip(subs, routes):
-        if rt in ("vector", "both"):
-            entities = extract_entities(sq)
-            if entities:
-                print(f"    entity_name $in {entities}")
-                print(_wrap(f"→ for: {sq}", indent=8))
-                any_filter = True
+    for i, (sq, rt, dep) in enumerate(zip(subs, routes, deps)):
+        if rt not in ("vector", "both"):
+            continue
+        # For dependent hops, show the resolved sub-question if available
+        resolved_sq = sq
+        if dep is not None and dep in hop_res:
+            from rag._resolver import resolve_template
+            resolved_sq = resolve_template(sq, hop_res)
+
+        entities = extract_entities(resolved_sq)
+        if entities:
+            label = f"hop {i}" + (f" (resolved from \"{sq[:40]}\")" if resolved_sq != sq else "")
+            print(f"    {label}:")
+            print(f"    entity_name $in {entities}")
+            any_filter = True
     if not any_filter:
         print("    None — full corpus scan (no named entity detected)")
 
@@ -134,7 +160,8 @@ def _display(result: dict, question: str) -> None:
 def main() -> None:
     print()
     _hr("═")
-    print("  FinGraph Intelligence System — Stage 4 Agentic RAG  (pre-deployment CLI)")
+    mode_hint = "  [--debug for pipeline logs]" if not _DEBUG_MODE else "  [DEBUG MODE]"
+    print(f"  FinGraph Intelligence System — Stage 5 Agentic RAG  (pre-deployment CLI){mode_hint}")
     _hr("═")
     print("  Type a question and press Enter.  Commands: quit / exit")
     print()

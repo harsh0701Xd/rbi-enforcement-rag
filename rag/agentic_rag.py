@@ -1,27 +1,31 @@
 """
 rag/agentic_rag.py
 
-Stage 3 -- Agentic GraphRAG: LangGraph orchestrator over vector + graph retrieval.
+Stage 4/5 -- Agentic GraphRAG: LangGraph orchestrator over vector + graph retrieval.
 
-Pipeline (linear DAG):
-  decomposer -> router -> vector_node -> graph_node -> synthesiser
+Pipeline (conditional DAG):
+  decomposer -> router -> [execution_mode == "parallel"] -> vector_node -> graph_node -> synthesiser
+                       -> [execution_mode == "serial"  ] -> hop_executor               -> synthesiser
 
-  decomposer  : breaks question into <= max_sub_questions atomic sub-questions
-  router      : classifies each as "vector" | "graph" | "both"
-                default route is "graph" for RBI domain (enforcement queries
-                are mostly entity/relational, not thematic)
-  vector_node : ChromaDB similarity search for "vector" / "both" sub-questions
-  graph_node  : NL->Cypher->Neo4j for "graph" / "both" sub-questions
-  synthesiser : merges both sources (Cypher label preserves semantic context)
-                and calls Claude to generate final answer with inline citations
+  decomposer   : breaks question into <= max_sub_questions atomic sub-questions.
+                 Stage 5: emits execution_mode, cypher_sufficient, hop_dependencies.
+  router       : classifies each sub-question as "vector" | "graph" | "both"
+  vector_node  : Stage 4 parallel path — ChromaDB + entity pre-filter + cross-encoder rerank
+  graph_node   : Stage 4 parallel path — NL→Cypher→Neo4j per sub-question
+  hop_executor : Stage 5 serial path — dependency-aware execution with template resolution
+  synthesiser  : merges both sources and generates the final answer with inline citations
+
+Stage 5 routing decision (made in _route_after_router()):
+  execution_mode == "parallel" → existing Stage 4 path (vector_node → graph_node)
+  execution_mode == "serial"   → hop_executor (handles both cypher_sufficient paths)
 
 Fallback chain (per CLAUDE.md s6):
-  graph_node fails (success=False) -> synthesiser uses vector_chunks only
-  both fail                         -> "I don't have enough information"
+  graph_node / hop_executor fails → synthesiser uses vector_chunks only
+  both fail                       → "I don't have enough information"
 
 Public API:
     AgenticResult              -- TypedDict returned by answer()
-    answer(question, cfg)      -- full Stage 3 pipeline, never raises
+    answer(question, cfg)      -- full Stage 4/5 pipeline, never raises
 """
 
 from __future__ import annotations
@@ -37,6 +41,7 @@ from config import get_config
 from rag._logger import InferenceLogger
 from rag._state import FinGraphState
 from rag.nodes.decomposer import decompose
+from rag.nodes.hop_executor import hop_execute
 from rag.nodes.retrieval import graph_node, vector_node
 from rag.nodes.router import route
 from rag.nodes.synthesiser import synthesise
@@ -57,6 +62,11 @@ class AgenticResult(TypedDict):
     routes:        list[str]  # routing decisions per sub-question
     stage:         str        # always "agentic"
     model:         str        # system model name from config
+    # Stage 5 fields — populated for all queries (defaults for Stage 4 parallel path)
+    execution_mode:    str    # "parallel" | "serial"
+    cypher_sufficient: bool   # True → single-shot Cypher was used
+    hop_dependencies:  list   # per-hop dependency list
+    hop_results:       dict   # hop_id -> resolved entity name
 
 
 # -- Graph row → context string -----------------------------------------------
@@ -97,28 +107,59 @@ def _graph_rows_to_context_strings(graph_results: list) -> list[str]:
 
 # -- LangGraph graph assembly -------------------------------------------------
 
-_app = None  # compiled graph singleton -- built once per process
+_app = None  # compiled graph singleton -- rebuilt for Stage 5 (6 nodes, conditional DAG)
+
+
+def _route_after_router(state: FinGraphState) -> str:
+    """
+    Conditional edge function called after the router node.
+
+    Returns the name of the next node to execute:
+      "parallel" → vector_node (Stage 4 unchanged path)
+      "serial"   → hop_executor (Stage 5 dependency-aware path)
+    """
+    mode = state.get("execution_mode", "parallel")
+    return "hop_executor" if mode == "serial" else "vector_node"
 
 
 def _get_app():
     global _app
     if _app is None:
         g = StateGraph(FinGraphState)
-        g.add_node("decomposer",  decompose)
-        g.add_node("router",      route)
-        g.add_node("vector_node", vector_node)
-        g.add_node("graph_node",  graph_node)
-        g.add_node("synthesiser", synthesise)
+        g.add_node("decomposer",   decompose)
+        g.add_node("router",       route)
+        g.add_node("vector_node",  vector_node)
+        g.add_node("graph_node",   graph_node)
+        g.add_node("hop_executor", hop_execute)
+        g.add_node("synthesiser",  synthesise)
 
         g.set_entry_point("decomposer")
-        g.add_edge("decomposer",  "router")
-        g.add_edge("router",      "vector_node")
+        g.add_edge("decomposer", "router")
+
+        # Conditional branch: parallel (Stage 4) vs serial (Stage 5)
+        g.add_conditional_edges(
+            "router",
+            _route_after_router,
+            {
+                "vector_node":  "vector_node",   # parallel path
+                "hop_executor": "hop_executor",  # serial path
+            },
+        )
+
+        # Parallel path edges (Stage 4 unchanged)
         g.add_edge("vector_node", "graph_node")
         g.add_edge("graph_node",  "synthesiser")
+
+        # Serial path edge (Stage 5)
+        g.add_edge("hop_executor", "synthesiser")
+
         g.add_edge("synthesiser", END)
 
         _app = g.compile()
-        log.info("LangGraph Stage 3 compiled (5 nodes, linear DAG)")
+        log.info(
+            "LangGraph Stage 5 compiled (6 nodes, conditional DAG: "
+            "parallel→vector_node+graph_node | serial→hop_executor)"
+        )
     return _app
 
 
@@ -148,6 +189,11 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
         "context":       "",
         "answer":        "",
         "iterations":    0,
+        # Stage 5 defaults — decomposer will overwrite if multi-hop is detected
+        "execution_mode":    "parallel",
+        "cypher_sufficient": False,
+        "hop_dependencies":  [],
+        "hop_results":       {},
     }
 
     _t = time.perf_counter()
@@ -215,6 +261,10 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
         routes=routes,
         stage="agentic",
         model=model,
+        execution_mode=final.get("execution_mode", "parallel"),
+        cypher_sufficient=final.get("cypher_sufficient", False),
+        hop_dependencies=final.get("hop_dependencies", []),
+        hop_results=final.get("hop_results", {}),
     )
 
 

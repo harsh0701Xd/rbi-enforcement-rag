@@ -30,6 +30,8 @@ agentic_rag:
   # Stage 4 vector-node upgrades
   top_k_vector: 10           # wide retrieval per sub-question before reranking
   top_k_vector_final: 5      # chunks kept after cross-encoder rerank per sub-question
+  # Stage 5 additions
+  max_hops: 3                # max dependent hops in serial execution (prevents latency compounding)
 
 # ── Models ────────────────────────────────────────────────────────────────────
 models:

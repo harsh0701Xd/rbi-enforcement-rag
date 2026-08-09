@@ -43,7 +43,7 @@ log = logging.getLogger(__name__)
 
 # ── RBI enforcement graph schema ──────────────────────────────────────────────
 # Must stay in sync with ingestion/graph_writer.py and _rbi_graph_queries.py.
-from prompts.cypher import SCHEMA as _SCHEMA, PROMPT as _CYPHER_PROMPT
+from prompts.cypher import SCHEMA as _SCHEMA, PROMPT as _CYPHER_PROMPT, MULTIHOP_PROMPT as _MULTIHOP_PROMPT
 
 # ── Aggregation intent detection ──────────────────────────────────────────────
 # Queries that need COUNT/SUM/AVG must not be LIMIT-capped.
@@ -166,6 +166,81 @@ def retrieve(question: str, cfg: dict | None = None) -> GraphResult:
         return GraphResult(cypher=cypher, rows=[], success=False)
 
     log.info("Graph query returned %d rows", len(rows))
+    return GraphResult(cypher=cypher, rows=rows, success=True)
+
+
+# ── Multi-hop retrieval (cypher_sufficient=True path) ─────────────────────────
+
+def _generate_multihop_cypher(sub_questions: list[str], cfg: dict) -> str | None:
+    """
+    Ask Claude Haiku to generate a single WITH-chained Cypher query that
+    covers all sub-questions in one DB round-trip.
+
+    Called only when cypher_sufficient=True — i.e. the decomposer determined
+    that all hops are answerable from the graph without vector retrieval.
+    """
+    numbered = "\n".join(f"{i+1}. {q}" for i, q in enumerate(sub_questions))
+    prompt = _MULTIHOP_PROMPT.format(
+        schema        = _SCHEMA,
+        limit         = cfg["agentic_rag"]["cypher_limit"],
+        sub_questions = numbered,
+    )
+    try:
+        msg = _get_anthropic().messages.create(
+            model       = cfg["models"]["system_model"],
+            max_tokens  = cfg["llm"]["max_tokens_cypher"],
+            temperature = cfg["llm"]["cypher_temperature"],
+            messages    = [{"role": "user", "content": prompt}],
+        )
+        raw = msg.content[0].text.strip()
+        raw = re.sub(r"^```(?:cypher)?\s*", "", raw, flags=re.IGNORECASE)
+        raw = re.sub(r"\s*```$", "", raw).strip()
+        return raw or None
+    except Exception as exc:
+        log.error("Multi-hop Cypher generation failed: %s", exc)
+        return None
+
+
+def retrieve_multihop(sub_questions: list[str], cfg: dict | None = None) -> GraphResult:
+    """
+    Generate and execute a single WITH-chained Cypher query covering all
+    sub_questions in one Neo4j round-trip.
+
+    Called by hop_executor when cypher_sufficient=True.  Never raises —
+    returns GraphResult(rows=[], success=False) on any failure so the caller
+    can fall back to hybrid serial execution.
+
+    Args:
+        sub_questions: Ordered list of atomic sub-questions (already template-free;
+                       cypher_sufficient=True means no vector hops are needed).
+        cfg:           Config dict from get_config(). Loaded automatically if None.
+
+    Returns:
+        GraphResult with rows populated on success, empty on failure.
+    """
+    if cfg is None:
+        cfg = get_config()
+
+    cypher = _generate_multihop_cypher(sub_questions, cfg)
+    if not cypher:
+        return GraphResult(cypher="", rows=[], success=False)
+
+    log.info("Multi-hop Cypher generated | %s", cypher.replace("\n", " ")[:200])
+
+    try:
+        rows = execute_cypher_safe(cypher, _get_driver(cfg))
+    except CypherSyntaxError as exc:
+        log.warning("Multi-hop CypherSyntaxError → falling back | %s", exc)
+        return GraphResult(cypher=cypher, rows=[], success=False)
+    except Exception as exc:
+        log.error("Multi-hop Neo4j execution error: %s", exc)
+        return GraphResult(cypher=cypher, rows=[], success=False)
+
+    if not rows:
+        log.info("Multi-hop Cypher returned 0 rows")
+        return GraphResult(cypher=cypher, rows=[], success=False)
+
+    log.info("Multi-hop Cypher returned %d rows", len(rows))
     return GraphResult(cypher=cypher, rows=rows, success=True)
 
 
