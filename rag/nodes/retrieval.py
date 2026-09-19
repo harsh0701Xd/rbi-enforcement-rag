@@ -109,20 +109,31 @@ def graph_node(state: FinGraphState) -> dict:
     LangGraph node -- graph retrieval for sub-questions routed "graph" or "both".
     Stores full GraphResult objects (including Cypher) so the synthesiser can
     label each result group with semantic context.
+
+    ALL results (success AND failure) are now appended so the API can surface
+    n_graph_attempted vs n_graph_succeeded to the UI.  Failed results have
+    rows=[] and their rows are not passed to the synthesiser
+    (_graph_rows_to_context_strings filters for success=True).
+
+    Each result is tagged with sub_q_idx (the index within sub_questions) so
+    the UI can label per-hop Cyphers ("Q1 Cypher", "Q2 Cypher", …).
+
     Returns: {"graph_results": [GraphResult, ...]}
     """
     cfg = get_config()
     results: list[GraphResult] = []
 
-    for q, route in zip(state["sub_questions"], state["routes"]):
+    for i, (q, route) in enumerate(zip(state["sub_questions"], state["routes"])):
         if route not in ("graph", "both"):
             continue
         result = graph_retrieve(q, cfg=cfg)
+        result["sub_q_idx"] = i          # tag for UI labelling (not in TypedDict but safe)
+        results.append(result)           # keep ALL — success AND failure
         if result["success"]:
-            results.append(result)
             log.info("graph_node | %-6s | %d rows | %s", route, len(result["rows"]), q)
         else:
             log.info("graph_node | %-6s | FAIL (fallback to vector) | %s", route, q)
 
-    log.info("graph_node total: %d successful graph results", len(results))
+    n_ok = sum(1 for r in results if r.get("success"))
+    log.info("graph_node total: %d attempted, %d succeeded", len(results), n_ok)
     return {"graph_results": results}

@@ -18,19 +18,18 @@ from __future__ import annotations
 
 import logging
 
-from sentence_transformers import CrossEncoder
-
 from config import get_config
 from retrieval.vector_retriever import VectorResult
 
 log = logging.getLogger(__name__)
 
-_reranker: CrossEncoder | None = None
+_reranker = None  # lazy-loaded on first call — avoids torch/transformers import at startup
 
 
-def _get_reranker(cfg: dict) -> CrossEncoder:
+def _get_reranker(cfg: dict):
     global _reranker
     if _reranker is None:
+        from sentence_transformers import CrossEncoder  # deferred — keeps startup fast
         model = cfg["models"]["reranker_model"]
         log.info("Loading cross-encoder: %s", model)
         _reranker = CrossEncoder(model)

@@ -1,31 +1,32 @@
 """
 rag/agentic_rag.py
 
-Stage 4/5 -- Agentic GraphRAG: LangGraph orchestrator over vector + graph retrieval.
+Stage 6 — Agentic GraphRAG: simplified 3-node LangGraph DAG.
 
-Pipeline (conditional DAG):
-  decomposer -> router -> [execution_mode == "parallel"] -> vector_node -> graph_node -> synthesiser
-                       -> [execution_mode == "serial"  ] -> hop_executor               -> synthesiser
+Pipeline (fixed linear DAG, no conditional edges):
+  decomposer → hop_executor → synthesiser
 
-  decomposer   : breaks question into <= max_sub_questions atomic sub-questions.
-                 Stage 5: emits execution_mode, cypher_sufficient, hop_dependencies.
-  router       : classifies each sub-question as "vector" | "graph" | "both"
-  vector_node  : Stage 4 parallel path — ChromaDB + entity pre-filter + cross-encoder rerank
-  graph_node   : Stage 4 parallel path — NL→Cypher→Neo4j per sub-question
-  hop_executor : Stage 5 serial path — dependency-aware execution with template resolution
-  synthesiser  : merges both sources and generates the final answer with inline citations
+  decomposer   : breaks question into atomic sub-questions; emits cypher_sufficient,
+                 hop_dependencies, fan_out.
+  hop_executor : owns ALL retrieval — handles three internal paths without DAG branching:
+                   Path A (cypher_sufficient=True) → single-shot WITH-chained Cypher
+                   Path B (fan_out=True)            → iterate Q2 over all Q1 rows
+                   Path C (default)                 → hybrid serial, two-pass
+  synthesiser  : merges context and generates final answer with inline citations.
 
-Stage 5 routing decision (made in _route_after_router()):
-  execution_mode == "parallel" → existing Stage 4 path (vector_node → graph_node)
-  execution_mode == "serial"   → hop_executor (handles both cypher_sufficient paths)
+Stage 6 removals vs Stage 5:
+  - vector_node, graph_node removed from DAG (hop_executor handles all retrieval)
+  - _route_after_decomposer conditional edge removed (no parallel path)
+  - execution_mode no longer drives routing (always "serial" — kept for UI compat only)
+  - fan_out added to state, AgenticResult, and API response
 
-Fallback chain (per CLAUDE.md s6):
-  graph_node / hop_executor fails → synthesiser uses vector_chunks only
-  both fail                       → "I don't have enough information"
+Fallback chain (per CLAUDE.md §6):
+  graph_node / hop_executor Cypher fails → synthesiser uses vector_chunks only
+  both fail                             → "I don't have enough information"
 
 Public API:
     AgenticResult              -- TypedDict returned by answer()
-    answer(question, cfg)      -- full Stage 4/5 pipeline, never raises
+    answer(question, cfg)      -- Stage 6 pipeline, never raises
 """
 
 from __future__ import annotations
@@ -42,8 +43,6 @@ from rag._logger import InferenceLogger
 from rag._state import FinGraphState
 from rag.nodes.decomposer import decompose
 from rag.nodes.hop_executor import hop_execute
-from rag.nodes.retrieval import graph_node, vector_node
-from rag.nodes.router import route
 from rag.nodes.synthesiser import synthesise
 
 load_dotenv()
@@ -51,7 +50,7 @@ load_dotenv()
 log = logging.getLogger(__name__)
 
 
-# -- Return type --------------------------------------------------------------
+# ── Return type ───────────────────────────────────────────────────────────────
 
 class AgenticResult(TypedDict):
     question:      str        # original question (for RAGAS)
@@ -62,26 +61,27 @@ class AgenticResult(TypedDict):
     routes:        list[str]  # routing decisions per sub-question
     stage:         str        # always "agentic"
     model:         str        # system model name from config
-    # Stage 5 fields — populated for all queries (defaults for Stage 4 parallel path)
-    execution_mode:    str    # "parallel" | "serial"
-    cypher_sufficient: bool   # True → single-shot Cypher was used
-    hop_dependencies:  list   # per-hop dependency list
-    hop_results:       dict   # hop_id -> resolved entity name
+    # Execution metadata
+    execution_mode:    str        # always "serial" in Stage 6 (kept for UI backward-compat)
+    cypher_sufficient: bool       # True → single-shot WITH-chained Cypher was used
+    fan_out:           bool       # True → Q2 iterated over all Q1 result rows
+    hop_dependencies:  list       # per-hop dependency list
+    hop_results:       dict       # hop_id -> raw rows[0] dict (Stage 6)
+    cypher_queries:    list[dict] # {label, cypher, success, n_rows} per graph attempt
+    n_graph_attempted: int        # total graph retrieve calls made
+    n_graph_succeeded: int        # how many returned success=True
 
 
-# -- Graph row → context string -----------------------------------------------
+# ── Graph row → context string ─────────────────────────────────────────────────
 
 def _graph_rows_to_context_strings(graph_results: list) -> list[str]:
     """
-    Convert successful Neo4j graph result rows into plain text strings
-    suitable for RAGAS context evaluation.
+    Convert successful Neo4j graph result rows into plain text context strings
+    suitable for RAGAS evaluation.
 
     Uses the same key=value formatting as synthesiser._format_row() so the
     context strings match what the synthesiser actually reasons over.
-    Deduplicates across all graph results (same row can appear from multiple
-    sub-questions resolved by the same Cypher path).
-
-    Returns an empty list when no graph results succeeded.
+    Deduplicates across all graph results.
     """
     strings: list[str] = []
     seen:    set[str]  = set()
@@ -105,73 +105,43 @@ def _graph_rows_to_context_strings(graph_results: list) -> list[str]:
     return strings
 
 
-# -- LangGraph graph assembly -------------------------------------------------
+# ── LangGraph graph assembly ──────────────────────────────────────────────────
 
-_app = None  # compiled graph singleton -- rebuilt for Stage 5 (6 nodes, conditional DAG)
-
-
-def _route_after_router(state: FinGraphState) -> str:
-    """
-    Conditional edge function called after the router node.
-
-    Returns the name of the next node to execute:
-      "parallel" → vector_node (Stage 4 unchanged path)
-      "serial"   → hop_executor (Stage 5 dependency-aware path)
-    """
-    mode = state.get("execution_mode", "parallel")
-    return "hop_executor" if mode == "serial" else "vector_node"
+_app = None  # compiled graph singleton
 
 
 def _get_app():
     global _app
     if _app is None:
         g = StateGraph(FinGraphState)
+
+        # Stage 6: 3-node linear DAG — no conditional edges, no parallel path
         g.add_node("decomposer",   decompose)
-        g.add_node("router",       route)
-        g.add_node("vector_node",  vector_node)
-        g.add_node("graph_node",   graph_node)
         g.add_node("hop_executor", hop_execute)
         g.add_node("synthesiser",  synthesise)
 
         g.set_entry_point("decomposer")
-        g.add_edge("decomposer", "router")
-
-        # Conditional branch: parallel (Stage 4) vs serial (Stage 5)
-        g.add_conditional_edges(
-            "router",
-            _route_after_router,
-            {
-                "vector_node":  "vector_node",   # parallel path
-                "hop_executor": "hop_executor",  # serial path
-            },
-        )
-
-        # Parallel path edges (Stage 4 unchanged)
-        g.add_edge("vector_node", "graph_node")
-        g.add_edge("graph_node",  "synthesiser")
-
-        # Serial path edge (Stage 5)
+        g.add_edge("decomposer",   "hop_executor")
         g.add_edge("hop_executor", "synthesiser")
-
-        g.add_edge("synthesiser", END)
+        g.add_edge("synthesiser",  END)
 
         _app = g.compile()
         log.info(
-            "LangGraph Stage 5 compiled (6 nodes, conditional DAG: "
-            "parallel→vector_node+graph_node | serial→hop_executor)"
+            "LangGraph compiled (Stage 6: 3-node linear DAG — "
+            "decomposer → hop_executor → synthesiser, no conditional edges)"
         )
     return _app
 
 
-# -- Main pipeline ------------------------------------------------------------
+# ── Main pipeline ─────────────────────────────────────────────────────────────
 
 def answer(question: str, cfg: dict | None = None) -> AgenticResult:
     """
-    Stage 3 Agentic GraphRAG pipeline.
+    Stage 6 Agentic GraphRAG pipeline.
 
     Invokes the compiled LangGraph DAG and returns a structured result
     compatible with the RAGAS eval pipeline and MLflow logging.
-    Never raises -- node failures degrade gracefully within the DAG.
+    Never raises — node failures degrade gracefully within the DAG.
     """
     if cfg is None:
         cfg = get_config()
@@ -189,11 +159,13 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
         "context":       "",
         "answer":        "",
         "iterations":    0,
-        # Stage 5 defaults — decomposer will overwrite if multi-hop is detected
-        "execution_mode":    "parallel",
+        # Stage 5/6 defaults — decomposer will overwrite
+        "execution_mode":    "serial",   # always serial in Stage 6
         "cypher_sufficient": False,
         "hop_dependencies":  [],
         "hop_results":       {},
+        # Stage 6 default
+        "fan_out": False,
     }
 
     _t = time.perf_counter()
@@ -208,6 +180,9 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
             question=question, answer=ans,
             contexts=[], graph_rows=[], sub_questions=[question],
             routes=["graph"], stage="agentic", model=model,
+            execution_mode="serial", cypher_sufficient=False, fan_out=False,
+            hop_dependencies=[], hop_results={},
+            cypher_queries=[], n_graph_attempted=0, n_graph_succeeded=0,
         )
     invoke_latency = time.perf_counter() - _t
 
@@ -216,16 +191,11 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
     for gr in final.get("graph_results", []):
         all_rows.extend(gr["rows"])
 
-    # Build unified context list: vector chunks + graph row strings.
-    # Graph rows are retrieved and passed to the synthesiser but were previously
-    # excluded from AgenticResult.contexts (RAGAS never saw them).
-    # Including them fixes context_entity_recall -- graph rows contain canonical
-    # entity names and factual fields (penalty_lakh, date, violation text) that
-    # RAGAS checks against ground truth answers.
-    graph_ctx = _graph_rows_to_context_strings(final.get("graph_results", []))
-    all_contexts: list[str] = final.get("vector_chunks", []) + graph_ctx
-
+    # Build unified context: vector chunks + graph row strings
+    graph_ctx     = _graph_rows_to_context_strings(final.get("graph_results", []))
+    all_contexts  = final.get("vector_chunks", []) + graph_ctx
     routes: list[str] = final.get("routes", [])
+
     logger.step(
         "langgraph_invoke",
         latency_s           = invoke_latency,
@@ -238,9 +208,10 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
         graph_success_count = sum(
             1 for gr in final.get("graph_results", []) if gr.get("success")
         ),
-        routes_graph  = routes.count("graph"),
-        routes_vector = routes.count("vector"),
-        routes_both   = routes.count("both"),
+        fan_out             = final.get("fan_out", False),
+        routes_graph        = routes.count("graph"),
+        routes_vector       = routes.count("vector"),
+        routes_both         = routes.count("both"),
     )
 
     ans = final["answer"]
@@ -252,6 +223,34 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
         n_graph_rows      = len(all_rows),
     )
 
+    # Build per-hop Cypher metadata for UI display.
+    # Includes ALL attempts (success + failure) so the UI can show X/Y succeeded.
+    _grs         = final.get("graph_results", [])
+    _fan_out     = final.get("fan_out", False)
+    _sub_qs      = final.get("sub_questions", [])
+    _n_sub       = len(_sub_qs)
+    _grs_with_cq = [gr for gr in _grs if gr.get("cypher")]
+
+    cypher_queries: list[dict] = []
+    for gr in _grs_with_cq:
+        sub_idx = gr.get("sub_q_idx", 0)
+        # Fan-out + graph path collapses to retrieve_multihop (single Cypher).
+        # Label it clearly so the user knows it covers all sub-questions,
+        # not just Q1. (Same treatment as cypher_sufficient=True.)
+        if _fan_out and len(_grs_with_cq) == 1 and _n_sub > 1:
+            covered = ", ".join(f"Q{j+1}" for j in range(_n_sub))
+            label   = f"Fan-out multi-hop ({covered})"
+        else:
+            label = f"Q{sub_idx + 1}"
+        cypher_queries.append({
+            "label":   label,
+            "cypher":  gr.get("cypher", ""),
+            "success": bool(gr.get("success")),
+            "n_rows":  len(gr.get("rows", [])),
+        })
+    n_graph_attempted: int = len(_grs)
+    n_graph_succeeded: int = sum(1 for gr in _grs if gr.get("success"))
+
     return AgenticResult(
         question=question,
         answer=ans,
@@ -261,14 +260,18 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
         routes=routes,
         stage="agentic",
         model=model,
-        execution_mode=final.get("execution_mode", "parallel"),
+        execution_mode=final.get("execution_mode", "serial"),
         cypher_sufficient=final.get("cypher_sufficient", False),
+        fan_out=final.get("fan_out", False),
         hop_dependencies=final.get("hop_dependencies", []),
         hop_results=final.get("hop_results", {}),
+        cypher_queries=cypher_queries,
+        n_graph_attempted=n_graph_attempted,
+        n_graph_succeeded=n_graph_succeeded,
     )
 
 
-# -- Smoke test ---------------------------------------------------------------
+# ── Smoke test ────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import sys
@@ -289,6 +292,6 @@ if __name__ == "__main__":
         print(f"\nQ: {_q}")
         print(f"   Sub-Qs : {_r['sub_questions']}")
         print(f"   Routes : {_r['routes']}")
-        print(f"   Chunks : {len(_r['contexts'])} vector | {len(_r['graph_rows'])} graph rows")
-        print(f"   A      : {_r['answer']}")
-        print(f"   stage={_r['stage']}")
+        print(f"   fan_out: {_r['fan_out']}")
+        print(f"   Chunks : {len(_r['contexts'])} contexts | {len(_r['graph_rows'])} graph rows")
+        print(f"   A      : {_r['answer'][:200]}")

@@ -2,15 +2,24 @@
 rag/nodes/decomposer.py
 
 LangGraph node: decompose the user question into at most max_sub_questions
-atomic sub-questions using Claude Haiku at temperature=0.
+atomic sub-questions using Claude Haiku at temperature=0, and classify each
+sub-question's retrieval route (vector | graph | both).
 
-Stage 5 change: output is now JSON that includes execution_mode, cypher_sufficient,
-and per-hop dependency info (depends_on). The node populates the new FinGraphState
-fields added in Stage 5.
+Routing is computed here using the deterministic keyword + named-entity
+classifier from rag/nodes/router.py (_classify).  The router node has been
+removed from the LangGraph DAG; this node now populates both sub_questions
+and routes in a single pass, saving one LLM round-trip.
+
+Stage 6 changes:
+  - execution_mode removed from prompt output (always "serial" in Stage 6)
+  - fan_out added: True when Q2 must iterate over ALL Q1 result rows
+  - placeholder syntax updated: {q0.field_name} instead of {q0_answer}
+  - _parse_json now returns (subs, exec_mode, cypher_ok, deps, fan_out)
 
 Fallback behaviour (robust against any LLM/parse failure):
-  - If JSON parsing fails → treat as parallel, single-item [original_question]
-  - All 4 new state fields get safe defaults on fallback
+  - If JSON parsing fails → single-item [original_question], serial, no fan_out
+  - Routes default to ["graph"] on fallback
+  - All state fields get safe defaults on fallback
 """
 
 from __future__ import annotations
@@ -41,6 +50,7 @@ def _get_client() -> anthropic.Anthropic:
 
 
 from prompts.decomposer import PROMPT as _PROMPT
+from rag.nodes.router import _classify
 
 
 @retry(
@@ -53,7 +63,7 @@ def _call(question: str, cfg: dict) -> str:
     max_q: int = cfg["agentic_rag"]["max_sub_questions"]
     msg = _get_client().messages.create(
         model       = cfg["models"]["system_model"],
-        max_tokens  = 512,                             # increased from 256 for JSON output
+        max_tokens  = 512,
         temperature = cfg["llm"]["chat_temperature"],
         messages    = [{"role": "user", "content": _PROMPT.format(
             max_q=max_q, question=question,
@@ -62,9 +72,19 @@ def _call(question: str, cfg: dict) -> str:
     return msg.content[0].text.strip()
 
 
-def _parse_json(raw: str, question: str, max_q: int) -> tuple[list[str], str, bool, list]:
+_VALID_ROUTES = {"graph", "vector", "both"}
+
+
+def _parse_json(raw: str, question: str, max_q: int) -> tuple[list[str], str, bool, list, bool, list[str] | None]:
     """
-    Parse the LLM JSON output into (sub_questions, execution_mode, cypher_sufficient, hop_deps).
+    Parse LLM JSON output into
+    (sub_questions, execution_mode, cypher_sufficient, hop_deps, fan_out, llm_routes).
+
+    llm_routes is a list[str] when the LLM produced valid routes, or None when
+    routes are absent/invalid (caller falls back to _classify).
+
+    Stage 6: execution_mode is always "serial" (all queries through hop_executor).
+    fan_out is a new boolean field — true when Q2 should iterate over all Q1 rows.
 
     Strips markdown fences if present.  Returns safe fallback values on any parse error.
     """
@@ -75,18 +95,18 @@ def _parse_json(raw: str, question: str, max_q: int) -> tuple[list[str], str, bo
     try:
         data = json.loads(cleaned)
     except json.JSONDecodeError as exc:
-        log.warning("Decomposer JSON parse error (%s) — falling back to parallel single-hop", exc)
-        return [question], "parallel", False, [None]
+        log.warning("Decomposer JSON parse error (%s) — falling back to single-hop serial", exc)
+        return [question], "serial", False, [None], False, None
 
     # Validate structure
     if not isinstance(data, dict) or "sub_questions" not in data:
         log.warning("Decomposer response missing 'sub_questions' key — falling back")
-        return [question], "parallel", False, [None]
+        return [question], "serial", False, [None], False, None
 
     raw_subs = data.get("sub_questions", [])
     if not isinstance(raw_subs, list) or not raw_subs:
         log.warning("Decomposer 'sub_questions' is empty or not a list — falling back")
-        return [question], "parallel", False, [None]
+        return [question], "serial", False, [None], False, None
 
     # Extract sub-question texts and dependency list (truncate to max_q)
     subs: list[str] = []
@@ -100,20 +120,42 @@ def _parse_json(raw: str, question: str, max_q: int) -> tuple[list[str], str, bo
         deps.append(None if dep is None else int(dep))
 
     if not subs:
-        return [question], "parallel", False, [None]
-
-    exec_mode: str = data.get("execution_mode", "parallel")
-    if exec_mode not in ("parallel", "serial"):
-        exec_mode = "parallel"
+        return [question], "serial", False, [None], False, None
 
     cypher_ok: bool = bool(data.get("cypher_sufficient", False))
+    fan_out:   bool = bool(data.get("fan_out", False))
 
-    # Sanity check: if any dep is non-None, mode must be serial
-    if any(d is not None for d in deps) and exec_mode == "parallel":
-        log.warning("Decomposer returned dependencies with parallel mode — forcing serial")
-        exec_mode = "serial"
+    # Sanity: fan_out and cypher_sufficient are mutually exclusive
+    if fan_out and cypher_ok:
+        log.warning(
+            "Decomposer returned fan_out=True with cypher_sufficient=True — "
+            "fan-out requires multiple queries; forcing cypher_sufficient=False"
+        )
+        cypher_ok = False
 
-    return subs, exec_mode, cypher_ok, deps
+    # In Stage 6 all paths go through hop_executor — execution_mode is always "serial"
+    exec_mode = "serial"
+
+    # Parse routes[] — validate length and values; None signals fallback to _classify
+    llm_routes: list[str] | None = None
+    raw_routes = data.get("routes")
+    if (
+        isinstance(raw_routes, list)
+        and len(raw_routes) == len(subs)
+        and all(r in _VALID_ROUTES for r in raw_routes)
+    ):
+        llm_routes = raw_routes
+    elif raw_routes is not None:
+        log.warning(
+            "Decomposer routes invalid (got %r for %d subs) — falling back to _classify",
+            raw_routes, len(subs),
+        )
+
+    log.debug(
+        "_parse_json: subs=%s deps=%s cypher_ok=%s fan_out=%s routes=%s",
+        subs, deps, cypher_ok, fan_out, llm_routes,
+    )
+    return subs, exec_mode, cypher_ok, deps, fan_out, llm_routes
 
 
 def decompose(state: FinGraphState) -> dict:
@@ -121,33 +163,46 @@ def decompose(state: FinGraphState) -> dict:
     LangGraph node — decompose state["question"] into sub-questions.
 
     Returns a partial state update with:
-      sub_questions, iterations, execution_mode, cypher_sufficient, hop_dependencies
+      sub_questions, routes, iterations, execution_mode,
+      cypher_sufficient, hop_dependencies, fan_out
     """
     cfg      = get_config()
     question = state["question"]
     max_q: int = cfg["agentic_rag"]["max_sub_questions"]
 
     try:
-        raw  = _call(question, cfg)
-        subs, exec_mode, cypher_ok, deps = _parse_json(raw, question, max_q)
+        raw = _call(question, cfg)
+        subs, exec_mode, cypher_ok, deps, fan_out, llm_routes = _parse_json(raw, question, max_q)
     except Exception as exc:
-        log.error("Decomposer failed — using original question as single parallel hop: %s", exc)
-        subs      = [question]
-        exec_mode = "parallel"
-        cypher_ok = False
-        deps      = [None]
+        log.error("Decomposer failed — using original question as single serial hop: %s", exc)
+        subs       = [question]
+        exec_mode  = "serial"
+        cypher_ok  = False
+        deps       = [None]
+        fan_out    = False
+        llm_routes = None
+
+    # Use LLM-provided routes when valid; fall back to keyword classifier otherwise.
+    if llm_routes is not None:
+        routes = llm_routes
+        route_source = "LLM"
+    else:
+        routes = [_classify(q) for q in subs]
+        route_source = "classifier"
 
     log.info(
-        "Decomposed into %d sub-question(s) | mode=%s | cypher_sufficient=%s | deps=%s",
-        len(subs), exec_mode, cypher_ok, deps,
+        "Decomposed into %d sub-question(s) | cypher_sufficient=%s | fan_out=%s | deps=%s | routes=%s [%s]",
+        len(subs), cypher_ok, fan_out, deps, routes, route_source,
     )
-    for i, (q, d) in enumerate(zip(subs, deps)):
-        log.debug("  hop %d (depends_on=%s): %s", i, d, q)
+    for i, (q, d, r) in enumerate(zip(subs, deps, routes)):
+        log.debug("  hop %d (depends_on=%s, route=%s): %s", i, d, r, q)
 
     return {
-        "sub_questions":    subs,
-        "iterations":       state.get("iterations", 0) + 1,
-        "execution_mode":   exec_mode,
+        "sub_questions":     subs,
+        "routes":            routes,
+        "iterations":        state.get("iterations", 0) + 1,
+        "execution_mode":    exec_mode,
         "cypher_sufficient": cypher_ok,
-        "hop_dependencies": deps,
+        "hop_dependencies":  deps,
+        "fan_out":           fan_out,
     }

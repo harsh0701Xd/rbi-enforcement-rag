@@ -32,10 +32,13 @@ agentic_rag:
   top_k_vector_final: 5      # chunks kept after cross-encoder rerank per sub-question
   # Stage 5 additions
   max_hops: 3                # max dependent hops in serial execution (prevents latency compounding)
+  # Stage 6 additions
+  max_fan_out: 8             # max Q1 result rows to iterate in fan-out execution
 
 # ── Models ────────────────────────────────────────────────────────────────────
 models:
-  system_model: "claude-haiku-4-5-20251001"   # reasoning + synthesis
+  system_model: "claude-haiku-4-5-20251001"   # decomposer + synthesis (fast, cheap)
+  cypher_model: "claude-sonnet-4-6"   # Stage 6: Cypher model (set to sonnet-4-6 for complex multi-hop)
   judge_model: "claude-sonnet-4-6"            # RAGAS eval only — NEVER set to system_model
   reranker_model: "cross-encoder/ms-marco-MiniLM-L6-v2"
 
@@ -71,15 +74,15 @@ llm:
   chat_temperature: 0            # all chat responses
   hyde_temperature: 0.3          # hypothetical doc generation only
   cypher_temperature: 0          # Cypher generation — never change
-  max_tokens_chat: 2048          # raised from 1024 — Stage 3 synthesis over multi-hop graph results
+  max_tokens_chat: 1024          # Stage 6: capped to prevent synthesiser blowup on open-ended doc queries
   max_tokens_extraction: 1024    # raised from 512 — worst-case: 8+ violations + 6 regulation_refs per PR
   max_tokens_cypher: 512         # raised from 256 — worst-case: multi-hop OPTIONAL MATCH with subqueries
 
 # ── Serving ───────────────────────────────────────────────────────────────────
 serving:
-  api_port: 8000
+  api_port: 8080
   uvicorn_workers: 2             # max on EC2 t3.medium 4GB RAM
-  request_timeout_seconds: 120   # LangGraph Stage 3 can take 30-60s
+  request_timeout_seconds: 180   # Stage 6: increased for complex multi-hop Cypher queries
   embed_cache_size: 1000         # LRU cache max entries
 
 # ── Evaluation ────────────────────────────────────────────────────────────────
