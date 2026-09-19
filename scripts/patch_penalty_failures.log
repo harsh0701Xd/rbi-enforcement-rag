@@ -1,0 +1,370 @@
+2026-09-05 11:43:51,066  INFO      Found 178 PenaltyAction nodes with null penalty_lakh
+2026-09-05 11:43:51,072  INFO      [1/178] prid=50699  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=50699
+2026-09-05 11:43:51,823  WARNING     PARSE FAILED: no amount found in page
+2026-09-05 11:43:52,424  INFO      [2/178] prid=51060  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=51060
+2026-09-05 11:43:52,795  WARNING     PARSE FAILED: no amount found in page
+2026-09-05 11:43:53,396  INFO      [3/178] prid=51238  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=51238
+2026-09-05 11:43:54,016  WARNING     PARSE FAILED: no amount found in page
+2026-09-05 11:43:54,618  INFO      [4/178] prid=51916  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=51916
+2026-09-05 11:43:55,408  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:43:56,010  INFO      [5/178] prid=52061  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=52061
+2026-09-05 11:43:56,673  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:43:57,274  INFO      [6/178] prid=52257  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=52257
+2026-09-05 11:43:57,878  INFO        ✓  penalty_lakh = 0.1300
+2026-09-05 11:43:58,479  INFO      [7/178] prid=53269  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=53269
+2026-09-05 11:43:59,004  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:43:59,606  INFO      [8/178] prid=53271  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=53271
+2026-09-05 11:44:00,177  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:44:00,779  INFO      [9/178] prid=53381  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=53381
+2026-09-05 11:44:01,371  INFO        ✓  penalty_lakh = 14.8300
+2026-09-05 11:44:01,973  INFO      [10/178] prid=53582  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=53582
+2026-09-05 11:44:02,811  INFO        ✓  penalty_lakh = 17.6396
+2026-09-05 11:44:03,412  INFO      [11/178] prid=53611  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=53611
+2026-09-05 11:44:04,070  INFO        ✓  penalty_lakh = 25.0000
+2026-09-05 11:44:04,671  INFO      [12/178] prid=53696  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=53696
+2026-09-05 11:44:05,273  INFO        ✓  penalty_lakh = 29.7900
+2026-09-05 11:44:05,875  INFO      [13/178] prid=53971  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=53971
+2026-09-05 11:44:06,305  INFO        ✓  penalty_lakh = 105.0000
+2026-09-05 11:44:06,907  INFO      [14/178] prid=54013  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54013
+2026-09-05 11:44:07,355  INFO        ✓  penalty_lakh = 37.5000
+2026-09-05 11:44:07,956  INFO      [15/178] prid=54022  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54022
+2026-09-05 11:44:08,408  INFO        ✓  penalty_lakh = 167.8000
+2026-09-05 11:44:09,011  INFO      [16/178] prid=54224  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54224
+2026-09-05 11:44:09,638  INFO        ✓  penalty_lakh = 5.9300
+2026-09-05 11:44:10,239  INFO      [17/178] prid=54439  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54439
+2026-09-05 11:44:10,754  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:44:11,356  INFO      [18/178] prid=54693  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54693
+2026-09-05 11:44:12,241  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:12,842  INFO      [19/178] prid=54695  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54695
+2026-09-05 11:44:13,327  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:13,929  INFO      [20/178] prid=54700  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54700
+2026-09-05 11:44:14,403  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:44:15,004  INFO      [21/178] prid=54843  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54843
+2026-09-05 11:44:15,425  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:16,026  INFO      [22/178] prid=54844  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54844
+2026-09-05 11:44:16,504  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:17,105  INFO      [23/178] prid=54851  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54851
+2026-09-05 11:44:17,839  INFO        ✓  penalty_lakh = 0.7500
+2026-09-05 11:44:18,440  INFO      [24/178] prid=54890  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54890
+2026-09-05 11:44:18,902  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:19,503  INFO      [25/178] prid=54894  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=54894
+2026-09-05 11:44:20,061  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:20,663  INFO      [26/178] prid=55017  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55017
+2026-09-05 11:44:21,197  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:21,798  INFO      [27/178] prid=55248  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55248
+2026-09-05 11:44:22,325  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:22,926  INFO      [28/178] prid=55249  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55249
+2026-09-05 11:44:23,450  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:24,052  INFO      [29/178] prid=55252  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55252
+2026-09-05 11:44:24,812  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:25,413  INFO      [30/178] prid=55322  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55322
+2026-09-05 11:44:26,114  INFO        ✓  penalty_lakh = 306.6600
+2026-09-05 11:44:26,716  INFO      [31/178] prid=55616  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55616
+2026-09-05 11:44:27,756  INFO        ✓  penalty_lakh = 0.3000
+2026-09-05 11:44:28,357  INFO      [32/178] prid=55644  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55644
+2026-09-05 11:44:29,228  INFO        ✓  penalty_lakh = 173.7500
+2026-09-05 11:44:29,830  INFO      [33/178] prid=55682  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55682
+2026-09-05 11:44:30,515  INFO        ✓  penalty_lakh = 5.0000
+2026-09-05 11:44:31,116  INFO      [34/178] prid=55688  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55688
+2026-09-05 11:44:31,748  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:44:32,349  INFO      [35/178] prid=55839  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55839
+2026-09-05 11:44:32,893  INFO        ✓  penalty_lakh = 6.0000
+2026-09-05 11:44:33,494  INFO      [36/178] prid=55908  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55908
+2026-09-05 11:44:34,043  INFO        ✓  penalty_lakh = 250.0000
+2026-09-05 11:44:34,645  INFO      [37/178] prid=55917  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55917
+2026-09-05 11:44:35,100  INFO        ✓  penalty_lakh = 2.5000
+2026-09-05 11:44:35,701  INFO      [38/178] prid=55920  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55920
+2026-09-05 11:44:36,355  INFO        ✓  penalty_lakh = 2.5000
+2026-09-05 11:44:36,956  INFO      [39/178] prid=55921  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55921
+2026-09-05 11:44:37,719  INFO        ✓  penalty_lakh = 28.0000
+2026-09-05 11:44:38,320  INFO      [40/178] prid=55975  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=55975
+2026-09-05 11:44:38,902  INFO        ✓  penalty_lakh = 0.0500
+2026-09-05 11:44:39,503  INFO      [41/178] prid=56155  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56155
+2026-09-05 11:44:39,992  INFO        ✓  penalty_lakh = 0.2000
+2026-09-05 11:44:40,594  INFO      [42/178] prid=56182  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56182
+2026-09-05 11:44:41,119  INFO        ✓  penalty_lakh = 1.0000
+2026-09-05 11:44:41,720  INFO      [43/178] prid=56203  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56203
+2026-09-05 11:44:42,431  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:43,032  INFO      [44/178] prid=56205  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56205
+2026-09-05 11:44:43,537  INFO        ✓  penalty_lakh = 1.0000
+2026-09-05 11:44:44,138  INFO      [45/178] prid=56206  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56206
+2026-09-05 11:44:44,668  INFO        ✓  penalty_lakh = 2.5000
+2026-09-05 11:44:45,269  INFO      [46/178] prid=56218  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56218
+2026-09-05 11:44:45,862  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:44:46,463  INFO      [47/178] prid=56622  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56622
+2026-09-05 11:44:47,033  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:44:47,634  INFO      [48/178] prid=56770  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56770
+2026-09-05 11:44:48,183  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:44:48,784  INFO      [49/178] prid=56793  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56793
+2026-09-05 11:44:49,739  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:44:50,341  INFO      [50/178] prid=56831  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56831
+2026-09-05 11:44:51,433  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:44:52,034  INFO      [51/178] prid=56832  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56832
+2026-09-05 11:44:52,514  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:53,120  INFO      [52/178] prid=56833  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56833
+2026-09-05 11:44:53,800  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:44:54,402  INFO      [53/178] prid=56882  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56882
+2026-09-05 11:44:54,946  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:44:55,547  INFO      [54/178] prid=56979  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=56979
+2026-09-05 11:44:56,265  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:56,866  INFO      [55/178] prid=57008  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57008
+2026-09-05 11:44:57,538  INFO        ✓  penalty_lakh = 0.0500
+2026-09-05 11:44:58,139  INFO      [56/178] prid=57010  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57010
+2026-09-05 11:44:58,753  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:44:59,354  INFO      [57/178] prid=57064  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57064
+2026-09-05 11:44:59,856  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:00,457  INFO      [58/178] prid=57209  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57209
+2026-09-05 11:45:01,170  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:01,771  INFO      [59/178] prid=57211  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57211
+2026-09-05 11:45:03,407  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:04,008  INFO      [60/178] prid=57213  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57213
+2026-09-05 11:45:04,829  INFO        ✓  penalty_lakh = 0.7500
+2026-09-05 11:45:05,430  INFO      [61/178] prid=57370  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57370
+2026-09-05 11:45:06,270  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:06,872  INFO      [62/178] prid=57520  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57520
+2026-09-05 11:45:07,382  INFO        ✓  penalty_lakh = 63.6000
+2026-09-05 11:45:07,984  INFO      [63/178] prid=57521  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57521
+2026-09-05 11:45:08,420  INFO        ✓  penalty_lakh = 131.8000
+2026-09-05 11:45:09,022  INFO      [64/178] prid=57543  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57543
+2026-09-05 11:45:09,709  INFO        ✓  penalty_lakh = 0.7500
+2026-09-05 11:45:10,310  INFO      [65/178] prid=57572  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57572
+2026-09-05 11:45:10,886  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:11,487  INFO      [66/178] prid=57573  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57573
+2026-09-05 11:45:11,992  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:45:12,593  INFO      [67/178] prid=57582  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57582
+2026-09-05 11:45:13,068  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:13,669  INFO      [68/178] prid=57632  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57632
+2026-09-05 11:45:14,426  INFO        ✓  penalty_lakh = 61.6000
+2026-09-05 11:45:15,027  INFO      [69/178] prid=57634  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57634
+2026-09-05 11:45:15,492  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:45:16,093  INFO      [70/178] prid=57652  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57652
+2026-09-05 11:45:16,676  INFO        ✓  penalty_lakh = 49.7000
+2026-09-05 11:45:17,277  INFO      [71/178] prid=57806  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57806
+2026-09-05 11:45:17,978  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:18,580  INFO      [72/178] prid=57807  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57807
+2026-09-05 11:45:19,235  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:19,836  INFO      [73/178] prid=57808  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57808
+2026-09-05 11:45:20,376  INFO        ✓  penalty_lakh = 0.7500
+2026-09-05 11:45:20,977  INFO      [74/178] prid=57851  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57851
+2026-09-05 11:45:21,444  INFO        ✓  penalty_lakh = 1.5000
+2026-09-05 11:45:22,046  INFO      [75/178] prid=57871  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57871
+2026-09-05 11:45:22,758  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:23,359  INFO      [76/178] prid=57879  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57879
+2026-09-05 11:45:23,839  INFO        ✓  penalty_lakh = 3.1000
+2026-09-05 11:45:24,441  INFO      [77/178] prid=57880  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57880
+2026-09-05 11:45:24,989  INFO        ✓  penalty_lakh = 1.5000
+2026-09-05 11:45:25,590  INFO      [78/178] prid=57967  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57967
+2026-09-05 11:45:26,319  INFO        ✓  penalty_lakh = 3.1000
+2026-09-05 11:45:26,921  INFO      [79/178] prid=57996  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=57996
+2026-09-05 11:45:27,408  INFO        ✓  penalty_lakh = 36.3800
+2026-09-05 11:45:28,009  INFO      [80/178] prid=58024  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58024
+2026-09-05 11:45:28,465  INFO        ✓  penalty_lakh = 0.7500
+2026-09-05 11:45:29,066  INFO      [81/178] prid=58065  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58065
+2026-09-05 11:45:29,515  INFO        ✓  penalty_lakh = 1.0000
+2026-09-05 11:45:30,117  INFO      [82/178] prid=58071  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58071
+2026-09-05 11:45:30,781  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:31,382  INFO      [83/178] prid=58072  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58072
+2026-09-05 11:45:32,063  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:45:32,664  INFO      [84/178] prid=58090  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58090
+2026-09-05 11:45:33,583  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:34,184  INFO      [85/178] prid=58091  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58091
+2026-09-05 11:45:34,781  INFO        ✓  penalty_lakh = 0.7500
+2026-09-05 11:45:35,382  INFO      [86/178] prid=58149  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58149
+2026-09-05 11:45:35,975  INFO        ✓  penalty_lakh = 2.0000
+2026-09-05 11:45:36,576  INFO      [87/178] prid=58150  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58150
+2026-09-05 11:45:37,202  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:45:37,804  INFO      [88/178] prid=58300  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58300
+2026-09-05 11:45:38,336  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:45:38,937  INFO      [89/178] prid=58322  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58322
+2026-09-05 11:45:39,382  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:39,983  INFO      [90/178] prid=58324  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58324
+2026-09-05 11:45:40,474  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:41,075  INFO      [91/178] prid=58334  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58334
+2026-09-05 11:45:41,529  INFO        ✓  penalty_lakh = 1.9000
+2026-09-05 11:45:42,130  INFO      [92/178] prid=58481  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58481
+2026-09-05 11:45:42,637  INFO        ✓  penalty_lakh = 5.0000
+2026-09-05 11:45:43,238  INFO      [93/178] prid=58550  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58550
+2026-09-05 11:45:43,874  INFO        ✓  penalty_lakh = 25.0000
+2026-09-05 11:45:44,475  INFO      [94/178] prid=58561  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58561
+2026-09-05 11:45:45,127  INFO        ✓  penalty_lakh = 192.0000
+2026-09-05 11:45:45,728  INFO      [95/178] prid=58562  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58562
+2026-09-05 11:45:46,202  INFO        ✓  penalty_lakh = 199.5000
+2026-09-05 11:45:46,802  INFO      [96/178] prid=58608  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58608
+2026-09-05 11:45:47,345  INFO        ✓  penalty_lakh = 2.1000
+2026-09-05 11:45:47,946  INFO      [97/178] prid=58654  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58654
+2026-09-05 11:45:48,526  INFO        ✓  penalty_lakh = 3.5000
+2026-09-05 11:45:49,127  INFO      [98/178] prid=58655  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58655
+2026-09-05 11:45:50,140  INFO        ✓  penalty_lakh = 5.0000
+2026-09-05 11:45:50,742  INFO      [99/178] prid=58704  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58704
+2026-09-05 11:45:51,253  INFO        ✓  penalty_lakh = 10.4000
+2026-09-05 11:45:51,854  INFO      [100/178] prid=58708  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58708
+2026-09-05 11:45:52,385  INFO        ✓  penalty_lakh = 23.1000
+2026-09-05 11:45:52,987  INFO      [101/178] prid=58864  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58864
+2026-09-05 11:45:53,468  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:54,070  INFO      [102/178] prid=58883  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58883
+2026-09-05 11:45:54,551  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:55,152  INFO      [103/178] prid=58885  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58885
+2026-09-05 11:45:55,570  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:56,171  INFO      [104/178] prid=58923  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58923
+2026-09-05 11:45:56,643  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:57,244  INFO      [105/178] prid=58946  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=58946
+2026-09-05 11:45:57,776  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:45:58,377  INFO      [106/178] prid=59022  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59022
+2026-09-05 11:45:59,004  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:45:59,606  INFO      [107/178] prid=59024  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59024
+2026-09-05 11:46:00,114  INFO        ✓  penalty_lakh = 0.6000
+2026-09-05 11:46:00,716  INFO      [108/178] prid=59046  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59046
+2026-09-05 11:46:01,482  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:02,084  INFO      [109/178] prid=59048  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59048
+2026-09-05 11:46:03,726  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:46:04,327  INFO      [110/178] prid=59173  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59173
+2026-09-05 11:46:04,847  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:46:05,448  INFO      [111/178] prid=59175  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59175
+2026-09-05 11:46:06,031  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:06,632  INFO      [112/178] prid=59200  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59200
+2026-09-05 11:46:07,097  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:07,698  INFO      [113/178] prid=59201  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59201
+2026-09-05 11:46:08,361  INFO        ✓  penalty_lakh = 1.0000
+2026-09-05 11:46:08,963  INFO      [114/178] prid=59203  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59203
+2026-09-05 11:46:09,512  INFO        ✓  penalty_lakh = 2.0000
+2026-09-05 11:46:10,113  INFO      [115/178] prid=59289  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59289
+2026-09-05 11:46:10,670  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:11,272  INFO      [116/178] prid=59352  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59352
+2026-09-05 11:46:11,959  INFO        ✓  penalty_lakh = 20.0000
+2026-09-05 11:46:12,560  INFO      [117/178] prid=59384  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59384
+2026-09-05 11:46:13,172  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:13,773  INFO      [118/178] prid=59487  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59487
+2026-09-05 11:46:14,468  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:15,070  INFO      [119/178] prid=59488  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59488
+2026-09-05 11:46:15,868  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:16,469  INFO      [120/178] prid=59489  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59489
+2026-09-05 11:46:17,219  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:17,820  INFO      [121/178] prid=59490  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59490
+2026-09-05 11:46:18,328  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:18,929  INFO      [122/178] prid=59511  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59511
+2026-09-05 11:46:19,590  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:20,191  INFO      [123/178] prid=59512  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59512
+2026-09-05 11:46:20,615  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:21,218  INFO      [124/178] prid=59513  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59513
+2026-09-05 11:46:21,874  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:46:22,475  INFO      [125/178] prid=59514  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59514
+2026-09-05 11:46:23,099  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:23,700  INFO      [126/178] prid=59747  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59747
+2026-09-05 11:46:24,272  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:24,873  INFO      [127/178] prid=59751  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59751
+2026-09-05 11:46:25,368  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:25,969  INFO      [128/178] prid=59782  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59782
+2026-09-05 11:46:26,469  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:46:27,071  INFO      [129/178] prid=59837  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59837
+2026-09-05 11:46:27,862  INFO        ✓  penalty_lakh = 0.2500
+2026-09-05 11:46:28,463  INFO      [130/178] prid=59844  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59844
+2026-09-05 11:46:29,114  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:29,716  INFO      [131/178] prid=59845  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59845
+2026-09-05 11:46:30,270  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:30,872  INFO      [132/178] prid=59915  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59915
+2026-09-05 11:46:31,446  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:32,047  INFO      [133/178] prid=59973  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=59973
+2026-09-05 11:46:32,511  INFO        ✓  penalty_lakh = 2.0000
+2026-09-05 11:46:33,112  INFO      [134/178] prid=60024  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60024
+2026-09-05 11:46:33,799  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:34,400  INFO      [135/178] prid=60037  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60037
+2026-09-05 11:46:35,155  INFO        ✓  penalty_lakh = 36.2800
+2026-09-05 11:46:35,757  INFO      [136/178] prid=60038  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60038
+2026-09-05 11:46:36,254  INFO        ✓  penalty_lakh = 36.3000
+2026-09-05 11:46:36,856  INFO      [137/178] prid=60082  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60082
+2026-09-05 11:46:37,595  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:38,197  INFO      [138/178] prid=60086  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60086
+2026-09-05 11:46:38,904  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:39,506  INFO      [139/178] prid=60104  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60104
+2026-09-05 11:46:40,107  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:40,708  INFO      [140/178] prid=60107  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60107
+2026-09-05 11:46:41,182  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:41,783  INFO      [141/178] prid=60111  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60111
+2026-09-05 11:46:42,391  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:42,993  INFO      [142/178] prid=60192  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60192
+2026-09-05 11:46:43,704  INFO        ✓  penalty_lakh = 3.2000
+2026-09-05 11:46:44,305  INFO      [143/178] prid=60382  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60382
+2026-09-05 11:46:44,827  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:45,428  INFO      [144/178] prid=60400  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60400
+2026-09-05 11:46:46,028  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:46,627  INFO      [145/178] prid=60401  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60401
+2026-09-05 11:46:47,123  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:47,728  INFO      [146/178] prid=60453  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60453
+2026-09-05 11:46:48,236  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:48,840  INFO      [147/178] prid=60504  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60504
+2026-09-05 11:46:49,377  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:46:49,978  INFO      [148/178] prid=60743  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60743
+2026-09-05 11:46:50,986  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:51,587  INFO      [149/178] prid=60806  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60806
+2026-09-05 11:46:52,162  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:52,763  INFO      [150/178] prid=60848  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60848
+2026-09-05 11:46:53,317  INFO        ✓  penalty_lakh = 3.0000
+2026-09-05 11:46:53,918  INFO      [151/178] prid=60849  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=60849
+2026-09-05 11:46:54,425  INFO        ✓  penalty_lakh = 2.0000
+2026-09-05 11:46:55,026  INFO      [152/178] prid=61089  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61089
+2026-09-05 11:46:55,499  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:56,101  INFO      [153/178] prid=61104  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61104
+2026-09-05 11:46:56,607  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:57,209  INFO      [154/178] prid=61106  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61106
+2026-09-05 11:46:57,842  INFO        ✓  penalty_lakh = 0.4500
+2026-09-05 11:46:58,445  INFO      [155/178] prid=61134  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61134
+2026-09-05 11:46:59,106  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:46:59,707  INFO      [156/178] prid=61198  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61198
+2026-09-05 11:47:00,492  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:01,094  INFO      [157/178] prid=61238  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61238
+2026-09-05 11:47:01,723  INFO        ✓  penalty_lakh = 0.2300
+2026-09-05 11:47:02,324  INFO      [158/178] prid=61284  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61284
+2026-09-05 11:47:03,742  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:04,343  INFO      [159/178] prid=61285  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61285
+2026-09-05 11:47:05,105  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:05,707  INFO      [160/178] prid=61307  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61307
+2026-09-05 11:47:06,573  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:07,175  INFO      [161/178] prid=61441  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61441
+2026-09-05 11:47:07,636  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:47:08,237  INFO      [162/178] prid=61443  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61443
+2026-09-05 11:47:09,348  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:09,949  INFO      [163/178] prid=61507  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61507
+2026-09-05 11:47:10,436  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:11,037  INFO      [164/178] prid=61508  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61508
+2026-09-05 11:47:11,769  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:12,371  INFO      [165/178] prid=61510  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61510
+2026-09-05 11:47:12,845  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:13,446  INFO      [166/178] prid=61564  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61564
+2026-09-05 11:47:13,993  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:47:14,594  INFO      [167/178] prid=61596  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61596
+2026-09-05 11:47:15,202  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:15,803  INFO      [168/178] prid=61652  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61652
+2026-09-05 11:47:16,346  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:16,946  INFO      [169/178] prid=61763  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61763
+2026-09-05 11:47:17,523  INFO        ✓  penalty_lakh = 3.1000
+2026-09-05 11:47:18,125  INFO      [170/178] prid=61801  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61801
+2026-09-05 11:47:19,092  INFO        ✓  penalty_lakh = 0.1300
+2026-09-05 11:47:19,694  INFO      [171/178] prid=61969  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=61969
+2026-09-05 11:47:20,235  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:47:20,836  INFO      [172/178] prid=62086  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=62086
+2026-09-05 11:47:21,495  INFO        ✓  penalty_lakh = 0.8000
+2026-09-05 11:47:22,096  INFO      [173/178] prid=62167  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=62167
+2026-09-05 11:47:22,565  INFO        ✓  penalty_lakh = 0.0500
+2026-09-05 11:47:23,166  INFO      [174/178] prid=62239  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=62239
+2026-09-05 11:47:23,729  INFO        ✓  penalty_lakh = 0.4000
+2026-09-05 11:47:24,330  INFO      [175/178] prid=62291  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=62291
+2026-09-05 11:47:24,844  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:25,446  INFO      [176/178] prid=62294  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=62294
+2026-09-05 11:47:26,001  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:26,603  INFO      [177/178] prid=62333  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=62333
+2026-09-05 11:47:28,446  INFO        ✓  penalty_lakh = 0.1000
+2026-09-05 11:47:29,048  INFO      [178/178] prid=62372  https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=62372
+2026-09-05 11:47:29,782  INFO        ✓  penalty_lakh = 0.5000
+2026-09-05 11:47:30,384  INFO      
+2026-09-05 11:47:30,385  INFO      ════════════════════════════════════════════════════════════
+2026-09-05 11:47:30,386  INFO      PATCH COMPLETE
+2026-09-05 11:47:30,388  INFO        Total records : 178
+2026-09-05 11:47:30,389  INFO        Patched       : 175
+2026-09-05 11:47:30,390  INFO        Failed        : 3
+2026-09-05 11:47:30,391  INFO      
+2026-09-05 11:47:30,392  INFO      FAILURES — review manually:
+2026-09-05 11:47:30,393  INFO        prid=50699     reason=no amount matched               https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=50699
+2026-09-05 11:47:30,394  INFO        prid=51060     reason=no amount matched               https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=51060
+2026-09-05 11:47:30,395  INFO        prid=51238     reason=no amount matched               https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=51238
+2026-09-05 11:47:30,396  INFO      
+2026-09-05 11:47:30,398  INFO      Full failure log saved to: /mnt/c/Users/harsh/OneDrive/Documents/FinGraph Intelligence System/rbi_intel/scripts/patch_penalty_failures.log

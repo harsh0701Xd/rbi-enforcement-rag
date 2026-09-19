@@ -97,9 +97,12 @@ def _get_anthropic() -> anthropic.Anthropic:
 
 def _generate_cypher(question: str, cfg: dict) -> str | None:
     """
-    Ask Claude Haiku to produce a Cypher query for the given question.
+    Ask Claude (cypher_model if configured, else system_model) to produce a Cypher query.
     Temperature = 0 (cfg["llm"]["cypher_temperature"]) — deterministic output.
     Returns None on any generation failure so retrieve() falls back cleanly.
+
+    Stage 6: uses cfg["models"]["cypher_model"] (Sonnet) for better Cypher reasoning.
+    Falls back to system_model if cypher_model is not configured.
     """
     # Prefix aggregation queries so Rule 12 fires in the Cypher prompt
     q_for_prompt = ("[AGGREGATION] " + question) if _is_aggregation(question) else question
@@ -109,9 +112,11 @@ def _generate_cypher(question: str, cfg: dict) -> str | None:
         limit    = cfg["agentic_rag"]["cypher_limit"],
         question = q_for_prompt,
     )
+    # Stage 6: separate model for Cypher generation (better at structured query reasoning)
+    cypher_model = cfg["models"].get("cypher_model", cfg["models"]["system_model"])
     try:
         msg = _get_anthropic().messages.create(
-            model       = cfg["models"]["system_model"],
+            model       = cypher_model,
             max_tokens  = cfg["llm"]["max_tokens_cypher"],
             temperature = cfg["llm"]["cypher_temperature"],
             messages    = [{"role": "user", "content": prompt}],
@@ -161,10 +166,6 @@ def retrieve(question: str, cfg: dict | None = None) -> GraphResult:
         log.error("Neo4j execution error: %s", exc)
         return GraphResult(cypher=cypher, rows=[], success=False)
 
-    if not rows:
-        log.info("Graph query returned 0 rows → caller falls back to vector")
-        return GraphResult(cypher=cypher, rows=[], success=False)
-
     log.info("Graph query returned %d rows", len(rows))
     return GraphResult(cypher=cypher, rows=rows, success=True)
 
@@ -173,8 +174,11 @@ def retrieve(question: str, cfg: dict | None = None) -> GraphResult:
 
 def _generate_multihop_cypher(sub_questions: list[str], cfg: dict) -> str | None:
     """
-    Ask Claude Haiku to generate a single WITH-chained Cypher query that
-    covers all sub-questions in one DB round-trip.
+    Ask Claude (cypher_model) to generate a single WITH-chained Cypher query
+    that covers all sub-questions in one DB round-trip.
+
+    Stage 6: uses cypher_model (Sonnet) — better handling of WITH alias rules
+    and complex multi-hop chaining.  Falls back to system_model if not configured.
 
     Called only when cypher_sufficient=True — i.e. the decomposer determined
     that all hops are answerable from the graph without vector retrieval.
@@ -185,9 +189,10 @@ def _generate_multihop_cypher(sub_questions: list[str], cfg: dict) -> str | None
         limit         = cfg["agentic_rag"]["cypher_limit"],
         sub_questions = numbered,
     )
+    cypher_model = cfg["models"].get("cypher_model", cfg["models"]["system_model"])
     try:
         msg = _get_anthropic().messages.create(
-            model       = cfg["models"]["system_model"],
+            model       = cypher_model,
             max_tokens  = cfg["llm"]["max_tokens_cypher"],
             temperature = cfg["llm"]["cypher_temperature"],
             messages    = [{"role": "user", "content": prompt}],
@@ -234,10 +239,6 @@ def retrieve_multihop(sub_questions: list[str], cfg: dict | None = None) -> Grap
         return GraphResult(cypher=cypher, rows=[], success=False)
     except Exception as exc:
         log.error("Multi-hop Neo4j execution error: %s", exc)
-        return GraphResult(cypher=cypher, rows=[], success=False)
-
-    if not rows:
-        log.info("Multi-hop Cypher returned 0 rows")
         return GraphResult(cypher=cypher, rows=[], success=False)
 
     log.info("Multi-hop Cypher returned %d rows", len(rows))
