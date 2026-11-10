@@ -124,10 +124,14 @@ def _try_mlflow(record: dict[str, Any]) -> None:
         mlflow.set_tracking_uri(tracking_uri)
         mlflow.set_experiment("rbi-intel-inference")
         with mlflow.start_run(run_name=f"{record['stage']}_{record['ts'][:10]}"):
-            mlflow.log_params({
+            params: dict[str, str] = {
                 "stage":    record["stage"],
                 "question": record["question"][:250],
-            })
+            }
+            # Log execution mode as a param (not a metric — it's categorical)
+            if "mode" in record:
+                params["mode"] = str(record["mode"])
+            mlflow.log_params(params)
             metrics: dict[str, float] = {
                 "total_latency_s": record["total_latency_s"],
                 "n_contexts":      float(record["n_contexts"]),
@@ -139,11 +143,11 @@ def _try_mlflow(record: dict[str, Any]) -> None:
                 for k, v in s.items():
                     if k not in ("step", "elapsed_s") and isinstance(v, (int, float)):
                         metrics[f"{prefix}__{k}"] = float(v)
-            # Any top-level numeric extras (n_graph_rows, n_sub_questions, ...)
+            # Any top-level numeric extras — exclude string fields already logged as params
+            _non_metric = {"ts", "stage", "question", "answer_chars",
+                           "n_contexts", "total_latency_s", "steps", "mode"}
             for k, v in record.items():
-                if k not in ("ts","stage","question","answer_chars",
-                             "n_contexts","total_latency_s","steps") \
-                        and isinstance(v, (int, float)):
+                if k not in _non_metric and isinstance(v, (int, float)):
                     metrics[k] = float(v)
             mlflow.log_metrics(metrics)
     except Exception as exc:

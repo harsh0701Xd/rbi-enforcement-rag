@@ -52,23 +52,52 @@ def cypher_validity_rate(pairs: list[dict], cfg: dict) -> float:
     return rate
 
 
-def routing_accuracy(pairs: list[dict]) -> float:
+def routing_accuracy(pairs: list[dict], cfg: dict) -> float:
     """
-    Fraction of questions where the Stage 3 keyword router assigned the
-    expected route (proxied from tier label).
+    Fraction of questions where the Stage 6 LLM decomposer assigned the
+    expected primary route (proxied from tier label: 1→vector, 2→graph, 3→both).
+
+    Stage 6 uses an LLM-based decomposer (not the Stage 3 keyword classifier),
+    so this function invokes the decomposer node on each question and compares
+    routes[0] against the expected route derived from the tier label.
     """
-    from rag.nodes.router import _classify
+    from rag._state import FinGraphState
+    from rag.nodes.decomposer import decompose
+
     correct = 0
     for p in pairs:
         expected = _TIER_ROUTE.get(p.get("tier", 1), "vector")
-        actual   = _classify(p["question"])
+        # Build a minimal FinGraphState — decomposer only reads "question" and "iterations"
+        state: FinGraphState = {
+            "question":          p["question"],
+            "sub_questions":     [],
+            "routes":            [],
+            "vector_chunks":     [],
+            "graph_results":     [],
+            "context":           "",
+            "answer":            "",
+            "iterations":        0,
+            "execution_mode":    "serial",
+            "cypher_sufficient": False,
+            "hop_dependencies":  [],
+            "hop_results":       {},
+            "fan_out":           False,
+        }
+        try:
+            result  = decompose(state)
+            routes  = result.get("routes", [])
+            actual  = routes[0] if routes else "graph"
+        except Exception as exc:
+            log.warning("Decomposer failed for '%s': %s", p["question"][:60], exc)
+            actual = "graph"  # safe fallback
+
         if actual == expected:
             correct += 1
         else:
             log.debug("Route mismatch | expected=%-6s actual=%-6s | %s",
                       expected, actual, p["question"])
     rate = correct / len(pairs) if pairs else 0.0
-    log.info("routing_accuracy: %.3f (%d/%d)", rate, correct, len(pairs))
+    log.info("routing_accuracy (Stage 6 decomposer): %.3f (%d/%d)", rate, correct, len(pairs))
     return rate
 
 
@@ -111,7 +140,7 @@ def compute_all(tier: int | None = None) -> dict[str, float]:
 
     scores = {
         "cypher_validity_rate": cypher_validity_rate(pairs, cfg),
-        "routing_accuracy":     routing_accuracy(pairs),
+        "routing_accuracy":     routing_accuracy(pairs, cfg),
         "node_precision":       node_precision(pairs, cfg),
     }
 

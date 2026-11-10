@@ -188,27 +188,36 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
 
     # Flatten graph rows for MLflow / RAGAS logging
     all_rows: list[dict] = []
-    for gr in final.get("graph_results", []):
+    _grs_all = final.get("graph_results", [])
+    for gr in _grs_all:
         all_rows.extend(gr["rows"])
 
     # Build unified context: vector chunks + graph row strings
-    graph_ctx     = _graph_rows_to_context_strings(final.get("graph_results", []))
+    graph_ctx     = _graph_rows_to_context_strings(_grs_all)
     all_contexts  = final.get("vector_chunks", []) + graph_ctx
     routes: list[str] = final.get("routes", [])
+
+    # Derived metrics for MLflow
+    _n_zero_row     = sum(1 for gr in _grs_all if gr.get("success") and not gr["rows"])
+    _cypher_in      = sum(gr.get("input_tokens",  0) for gr in _grs_all)
+    _cypher_out     = sum(gr.get("output_tokens", 0) for gr in _grs_all)
+    _cypher_suff    = final.get("cypher_sufficient", False)
+    _fan_out_flag   = final.get("fan_out", False)
+    _mode           = "single_shot" if _cypher_suff else ("fan_out" if _fan_out_flag else "serial")
 
     logger.step(
         "langgraph_invoke",
         latency_s           = invoke_latency,
         n_sub_questions     = len(final.get("sub_questions", [])),
         n_vector_chunks     = len(final.get("vector_chunks", [])),
-        n_graph_ctx_strings = len(graph_ctx),
-        n_total_contexts    = len(all_contexts),
         n_graph_rows        = len(all_rows),
-        n_graph_results     = len(final.get("graph_results", [])),
-        graph_success_count = sum(
-            1 for gr in final.get("graph_results", []) if gr.get("success")
-        ),
-        fan_out             = final.get("fan_out", False),
+        n_graph_results     = len(_grs_all),
+        graph_success_count = sum(1 for gr in _grs_all if gr.get("success")),
+        n_zero_row_successes= _n_zero_row,
+        cypher_sufficient   = int(_cypher_suff),
+        fan_out             = int(_fan_out_flag),
+        cypher_token_input  = _cypher_in,
+        cypher_token_output = _cypher_out,
         routes_graph        = routes.count("graph"),
         routes_vector       = routes.count("vector"),
         routes_both         = routes.count("both"),
@@ -217,19 +226,15 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
     ans = final["answer"]
     logger.finish(
         ans,
-        n_contexts        = len(all_contexts),
-        n_vector_contexts = len(final.get("vector_chunks", [])),
-        n_graph_contexts  = len(graph_ctx),
-        n_graph_rows      = len(all_rows),
+        n_contexts = len(all_contexts),
+        mode       = _mode,
     )
 
     # Build per-hop Cypher metadata for UI display.
     # Includes ALL attempts (success + failure) so the UI can show X/Y succeeded.
-    _grs         = final.get("graph_results", [])
-    _fan_out     = final.get("fan_out", False)
     _sub_qs      = final.get("sub_questions", [])
     _n_sub       = len(_sub_qs)
-    _grs_with_cq = [gr for gr in _grs if gr.get("cypher")]
+    _grs_with_cq = [gr for gr in _grs_all if gr.get("cypher")]
 
     cypher_queries: list[dict] = []
     for gr in _grs_with_cq:
@@ -237,7 +242,7 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
         # Fan-out + graph path collapses to retrieve_multihop (single Cypher).
         # Label it clearly so the user knows it covers all sub-questions,
         # not just Q1. (Same treatment as cypher_sufficient=True.)
-        if _fan_out and len(_grs_with_cq) == 1 and _n_sub > 1:
+        if _fan_out_flag and len(_grs_with_cq) == 1 and _n_sub > 1:
             covered = ", ".join(f"Q{j+1}" for j in range(_n_sub))
             label   = f"Fan-out multi-hop ({covered})"
         else:
@@ -248,8 +253,8 @@ def answer(question: str, cfg: dict | None = None) -> AgenticResult:
             "success": bool(gr.get("success")),
             "n_rows":  len(gr.get("rows", [])),
         })
-    n_graph_attempted: int = len(_grs)
-    n_graph_succeeded: int = sum(1 for gr in _grs if gr.get("success"))
+    n_graph_attempted: int = len(_grs_all)
+    n_graph_succeeded: int = sum(1 for gr in _grs_all if gr.get("success"))
 
     return AgenticResult(
         question=question,

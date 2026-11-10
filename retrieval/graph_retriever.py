@@ -68,9 +68,11 @@ def _is_aggregation(question: str) -> bool:
 # ── Return type ───────────────────────────────────────────────────────────────
 
 class GraphResult(TypedDict):
-    cypher:  str         # generated Cypher (preserved for MLflow logging)
-    rows:    list[dict]  # result rows; empty list on any failure
-    success: bool        # False → caller must fall back to vector_retriever
+    cypher:        str        # generated Cypher (preserved for MLflow logging)
+    rows:          list[dict] # result rows; empty list on any failure
+    success:       bool       # False → caller must fall back to vector_retriever
+    input_tokens:  int        # LLM tokens consumed by Cypher generation (input)
+    output_tokens: int        # LLM tokens consumed by Cypher generation (output)
 
 
 # ── Module-level singletons ───────────────────────────────────────────────────
@@ -95,11 +97,12 @@ def _get_anthropic() -> anthropic.Anthropic:
 
 # ── Cypher generation ─────────────────────────────────────────────────────────
 
-def _generate_cypher(question: str, cfg: dict) -> str | None:
+def _generate_cypher(question: str, cfg: dict) -> tuple[str | None, int, int]:
     """
     Ask Claude (cypher_model if configured, else system_model) to produce a Cypher query.
     Temperature = 0 (cfg["llm"]["cypher_temperature"]) — deterministic output.
-    Returns None on any generation failure so retrieve() falls back cleanly.
+    Returns (cypher_text, input_tokens, output_tokens).
+    Returns (None, 0, 0) on any generation failure so retrieve() falls back cleanly.
 
     Stage 6: uses cfg["models"]["cypher_model"] (Sonnet) for better Cypher reasoning.
     Falls back to system_model if cypher_model is not configured.
@@ -125,10 +128,12 @@ def _generate_cypher(question: str, cfg: dict) -> str | None:
         # Strip markdown fences if the model wraps output despite instructions
         raw = re.sub(r"^```(?:cypher)?\s*", "", raw, flags=re.IGNORECASE)
         raw = re.sub(r"\s*```$", "", raw).strip()
-        return raw or None
+        in_tok  = getattr(msg.usage, "input_tokens",  0)
+        out_tok = getattr(msg.usage, "output_tokens", 0)
+        return (raw or None), in_tok, out_tok
     except Exception as exc:
         log.error("Cypher generation failed: %s", exc)
-        return None
+        return None, 0, 0
 
 
 # ── Main retrieval function ───────────────────────────────────────────────────
@@ -151,9 +156,9 @@ def retrieve(question: str, cfg: dict | None = None) -> GraphResult:
     if cfg is None:
         cfg = get_config()
 
-    cypher = _generate_cypher(question, cfg)
+    cypher, in_tok, out_tok = _generate_cypher(question, cfg)
     if not cypher:
-        return GraphResult(cypher="", rows=[], success=False)
+        return GraphResult(cypher="", rows=[], success=False, input_tokens=0, output_tokens=0)
 
     log.info("Generated Cypher | %s", cypher.replace("\n", " "))
 
@@ -161,18 +166,18 @@ def retrieve(question: str, cfg: dict | None = None) -> GraphResult:
         rows = execute_cypher_safe(cypher, _get_driver(cfg))
     except CypherSyntaxError as exc:
         log.warning("CypherSyntaxError → falling back to vector | %s", exc)
-        return GraphResult(cypher=cypher, rows=[], success=False)
+        return GraphResult(cypher=cypher, rows=[], success=False, input_tokens=in_tok, output_tokens=out_tok)
     except Exception as exc:
         log.error("Neo4j execution error: %s", exc)
-        return GraphResult(cypher=cypher, rows=[], success=False)
+        return GraphResult(cypher=cypher, rows=[], success=False, input_tokens=in_tok, output_tokens=out_tok)
 
     log.info("Graph query returned %d rows", len(rows))
-    return GraphResult(cypher=cypher, rows=rows, success=True)
+    return GraphResult(cypher=cypher, rows=rows, success=True, input_tokens=in_tok, output_tokens=out_tok)
 
 
 # ── Multi-hop retrieval (cypher_sufficient=True path) ─────────────────────────
 
-def _generate_multihop_cypher(sub_questions: list[str], cfg: dict) -> str | None:
+def _generate_multihop_cypher(sub_questions: list[str], cfg: dict) -> tuple[str | None, int, int]:
     """
     Ask Claude (cypher_model) to generate a single WITH-chained Cypher query
     that covers all sub-questions in one DB round-trip.
@@ -182,6 +187,9 @@ def _generate_multihop_cypher(sub_questions: list[str], cfg: dict) -> str | None
 
     Called only when cypher_sufficient=True — i.e. the decomposer determined
     that all hops are answerable from the graph without vector retrieval.
+
+    Returns (cypher_text, input_tokens, output_tokens).
+    Returns (None, 0, 0) on any generation failure.
     """
     numbered = "\n".join(f"{i+1}. {q}" for i, q in enumerate(sub_questions))
     prompt = _MULTIHOP_PROMPT.format(
@@ -200,10 +208,12 @@ def _generate_multihop_cypher(sub_questions: list[str], cfg: dict) -> str | None
         raw = msg.content[0].text.strip()
         raw = re.sub(r"^```(?:cypher)?\s*", "", raw, flags=re.IGNORECASE)
         raw = re.sub(r"\s*```$", "", raw).strip()
-        return raw or None
+        in_tok  = getattr(msg.usage, "input_tokens",  0)
+        out_tok = getattr(msg.usage, "output_tokens", 0)
+        return (raw or None), in_tok, out_tok
     except Exception as exc:
         log.error("Multi-hop Cypher generation failed: %s", exc)
-        return None
+        return None, 0, 0
 
 
 def retrieve_multihop(sub_questions: list[str], cfg: dict | None = None) -> GraphResult:
@@ -226,9 +236,9 @@ def retrieve_multihop(sub_questions: list[str], cfg: dict | None = None) -> Grap
     if cfg is None:
         cfg = get_config()
 
-    cypher = _generate_multihop_cypher(sub_questions, cfg)
+    cypher, in_tok, out_tok = _generate_multihop_cypher(sub_questions, cfg)
     if not cypher:
-        return GraphResult(cypher="", rows=[], success=False)
+        return GraphResult(cypher="", rows=[], success=False, input_tokens=0, output_tokens=0)
 
     log.info("Multi-hop Cypher generated | %s", cypher.replace("\n", " ")[:200])
 
@@ -236,13 +246,13 @@ def retrieve_multihop(sub_questions: list[str], cfg: dict | None = None) -> Grap
         rows = execute_cypher_safe(cypher, _get_driver(cfg))
     except CypherSyntaxError as exc:
         log.warning("Multi-hop CypherSyntaxError → falling back | %s", exc)
-        return GraphResult(cypher=cypher, rows=[], success=False)
+        return GraphResult(cypher=cypher, rows=[], success=False, input_tokens=in_tok, output_tokens=out_tok)
     except Exception as exc:
         log.error("Multi-hop Neo4j execution error: %s", exc)
-        return GraphResult(cypher=cypher, rows=[], success=False)
+        return GraphResult(cypher=cypher, rows=[], success=False, input_tokens=in_tok, output_tokens=out_tok)
 
     log.info("Multi-hop Cypher returned %d rows", len(rows))
-    return GraphResult(cypher=cypher, rows=rows, success=True)
+    return GraphResult(cypher=cypher, rows=rows, success=True, input_tokens=in_tok, output_tokens=out_tok)
 
 
 # ── Smoke test ────────────────────────────────────────────────────────────────
